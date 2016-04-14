@@ -1,6 +1,6 @@
 //INITIAL
-var stream = '<!doctype html><html><head><title>Hello</title></head><body><p>World</p></body></html>';
-
+//var stream = '<!doctype html><html><head><title>Hello</title></head><body><p>World</p></body></html>';
+var stream = '<p hihi="hoho">Hello</p><div>heheii</div><br /><b>jojoeoeo</b>';
 function documents (type){
     this.type = type;
     this.firstChild = {parent: this};
@@ -235,7 +235,7 @@ var parsing = function (stream) {
             return true;
         return false;
     }
-    function createElement(type, parent, namespace) {
+    function createElement(type, parent, namespace, token) {
         function reset (node){
             //**/
         }
@@ -347,7 +347,7 @@ var parsing = function (stream) {
     function insertNode (target, newNode, mode){
         if (mode == "first" || mode == "last"){
             newNode.parent = target;
-            if (target.lastChild == null){
+            if (target.lastChild.type == null){
                 target.firstChild = newNode;
                 target.lastChild = newNode;
             }
@@ -588,7 +588,7 @@ var parsing = function (stream) {
             listFormat.splice(cnt[1][0], 1);
         listFormat.push(node);
     }
-    function adoptionAgency(subject, namespace) {
+    function adoptionAgency(subject, namespace, token) {
         if (currentNode().type == subject && listFormat.indexOf(currentNode()) == -1) {
             stackOpen.pop();
             return;
@@ -662,7 +662,7 @@ var parsing = function (stream) {
                     stackOpen.splice(stackOpen.indexOf(node), 1);
                     continue;
                 }
-                var newNode = createElement(node.type, commonAncestor, namespace);
+                var newNode = createElement(node.type, commonAncestor, namespace, token);
                 removeNode = [stackOpen.indexOf(node), node];
                 listFormat.splice(listFormat.indexOf(node), 1, newNode);
                 stackOpen.splice(stackOpen.indexOf(node), 1, newNode);
@@ -686,7 +686,7 @@ var parsing = function (stream) {
             }
             var insertTemp = appropriateInsert(commonAncestor);
             insertNode(insertTemp.target, lastNode, insertTemp.mode);
-            var newEl = createElement(formatEl.type, furthestBlock, namespace);
+            var newEl = createElement(formatEl.type, furthestBlock, namespace, token);
             while (furthestBlock.firstChild != null) {
                 insertNode(newEl, furthestBlock.firstChild, "last");
                 furthestBlock.firstChild = furthestBlock.firstChild.next;
@@ -763,13 +763,10 @@ var parsing = function (stream) {
     }
     function insertForeignElement(token, namespace) {
         var adjustInsert = appropriateInsert();
-        var newNode = createElement(token[1], adjustInsert.mode == "last" ? adjustInsert.target : adjustInsert.target.parent, namespace);
+        var newNode = createElement(token[1], adjustInsert.mode == "last" ? adjustInsert.target : adjustInsert.target.parent, namespace, token);
         insertNode(adjustInsert.target, newNode, adjustInsert.mode);
         stackOpen.push(newNode);
         return newNode;
-    }
-    function treeViewer(doc) {
-        
     }
 
     //12.2.5 Tree construction
@@ -955,7 +952,7 @@ var parsing = function (stream) {
                             break;
                         case "StartTag":
                             if (token[1] == "html"){
-                                var newNode = createElement(token[1], document, token[4]);
+                                var newNode = createElement(token[1], document, token[4], token);
                                 insertNode(document, newNode, "last");
                                 stackOpen.push(newNode);
                                 //**/
@@ -975,7 +972,7 @@ var parsing = function (stream) {
                             break;
                     }
                     if (flag){
-                        var newNode = createElement("html", document);
+                        var newNode = createElement("html", document, nsEl["html"], ["StartTag", "html", {}]);
                         insertNode(document, newNode, "last");
                         stackOpen.push(newNode);
                         //**/
@@ -1426,7 +1423,7 @@ var parsing = function (stream) {
                                     }
                                 if (flag != -1) {
                                     emit("ParseError");
-                                    var resAdopt = adoptionAgency(token[1], token[4]);
+                                    var resAdopt = adoptionAgency(token[1], token[4], token);
                                     if (resAdopt == -1)
                                         flag = true;
                                     else {
@@ -1449,7 +1446,7 @@ var parsing = function (stream) {
                                 var resAdopt;
                                 if (hasElementScope("nobr")) {
                                     emit("ParseError");
-                                    resAdopt = adoptionAgency(token[1], token[4]);
+                                    resAdopt = adoptionAgency(token[1], token[4], token);
                                     if (resAdopt == -1)
                                         flag = true;
                                     else
@@ -1738,7 +1735,7 @@ var parsing = function (stream) {
                                 }
                             }
                             else if (["a", "b", "big", "code", "em", "font", "i", "nobr", "s", "small", "strike", "strong", "tt", "u"].indexOf(token[1]) != -1)
-                                var resAdopt = adoptionAgency(token[1], token[4]);
+                                var resAdopt = adoptionAgency(token[1], token[4], token);
                                 if (resAdopt == -1)
                                     flag = true;
                             else if (["applet", "marquee", "object"].indexOf("applet", "marquee", "object") != -1){
@@ -2708,7 +2705,7 @@ var parsing = function (stream) {
                 emits.push(true);
         }
         else if (type == "DOCTYPE")
-            emits = [type, value.name, value.publicId, value.systemId, value.flag=="on"?true:false];
+            emits = [type, value.name, value.publicId, value.systemId, value.flag == "on"];
         else emits = [type, value];
         emitList.push(emits);
         if (labelProcess > 0) {
@@ -4889,7 +4886,6 @@ var parsing = function (stream) {
                     break;
             }
         }
-        console.log(state);
         logs.push("End function Tokenization");
     };
 
@@ -4897,6 +4893,35 @@ var parsing = function (stream) {
     nextInput++;
     logs.push("End function Parsing");
 };
+
+function treeViewer(doc) {
+    var structure = "";
+    var currentNode = doc.firstChild;
+    var rpt = 1;
+    structure += "#document: " + doc.type;
+    var dd = 0
+    out:
+    while (currentNode.parent != null) {
+        dd++;
+        structure += "\n" + " ".repeat(rpt) + "-" + currentNode.type + ": " + JSON.stringify(currentNode.attr);
+        if (currentNode.firstChild.type != null) {
+            currentNode = currentNode.firstChild;
+            rpt++;
+        }
+        else if (currentNode.next != null)
+            currentNode = currentNode.next;
+        else {
+            while (currentNode.next == null) {
+                if (currentNode.parent == null)
+                    break out;
+                currentNode = currentNode.parent;
+                rpt--;
+            }
+        }
+    }
+    return structure;
+}
+
 var streamR = preprocessing(stream);
 logs.push("PRE-PROCESS TOKENS");
 parsing(streamR);
@@ -4904,7 +4929,8 @@ labelProcess++;
 emitList = [];
 logs.push("PARSING");
 parsing(streamR);
-console.log(logs);
-console.log(streamR);
-console.log(emitList);
-console.log(document);
+//console.log(logs);
+//console.log(streamR);
+//console.log(emitList);
+console.log(treeViewer(document));
+//console.log(document);

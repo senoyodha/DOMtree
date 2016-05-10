@@ -1,4 +1,4 @@
-//INITIAL
+//INITIAL2
 //var stream = '<!doctype html><html><head><title>Hello</title></head><body><p>World</p></body></html>';
 var stream = '<p hihi="hoho">Hello</p><div>heheii</div><br /><b>jojoeoeo</b>';
 function documents (type){

@@ -1,7 +1,3 @@
-//INITIAL2
-//var stream = '<!doctype html><html><head><title>Hello</title></head><body><p>World</p></body></html>';
-//var stream = '<p hihi="hoho">Hello</p><div>heheii</div><br /><b>jojoeoeo</b>';
-//var stream = 'token';
 module.exports = {
     parser: function (stream) {
         var stream = stream;
@@ -38,7 +34,7 @@ module.exports = {
             this.document = doc == null ? document : doc;
         }
 
-        var logs = [];
+        var logall = [];
         var emitList = [];
         var tokenList = [];
         var labelProcess = 0;
@@ -55,7 +51,7 @@ module.exports = {
             var flag = false;
             var streamTemp = "";
             var charEq = ["\u{1FFFE}", "\u{1FFFF}", "\u{2FFFE}", "\u{2FFFF}", "\u{3FFFE}", "\u{3FFFF}", "\u{4FFFE}", "\u{4FFFF}", "\u{5FFFE}", "\u{5FFFF}", "\u{6FFFE}", "\u{6FFFF}", "\u{7FFFE}", "\u{7FFFF}", "\u{8FFFE}", "\u{8FFFF}", "\u{9FFFE}", "\u{9FFFF}", "\u{AFFFE}", "\u{AFFFF}", "\u{BFFFE}", "\u{BFFFF}", "\u{CFFFE}", "\u{CFFFF}", "\u{DFFFE}", "\u{DFFFF}", "\u{EFFFE}", "\u{EFFFF}", "\u{FFFFE}", "\u{FFFFF}", "\u{10FFFE}", "\u{10FFFF}"];
-            logs.push("Call function Preprocessing (12.2.2.5)");
+            //logall.push("Call function Preprocessing (12.2.2.5)");
             for (var i = 0; i < stream.length; i++) {
                 if (flag == true) {
                     flag = false;
@@ -65,30 +61,30 @@ module.exports = {
                 currentInput = stream[i - 1];
                 next = stream[i + 1];
                 if (charEq.indexOf(nextInput + next) != -1) {
-                    logs.push("> Preprocess " + nextInput + next + " (U+" + (nextInput + next).codePointAt(0).toString(16).toUpperCase() + ")");
-                    logs.push(">> Parse error|Preprocess: Control character (astral)|Ignored");
+                    //logall.push("> Preprocess " + nextInput + next + " (U+" + (nextInput + next).codePointAt(0).toString(16).toUpperCase() + ")");
+                    //logall.push(">> Parse error|Preprocess: Control character (astral)|Ignored");
                     flag = true;
                     continue;
                 }
                 var utfCode = nextInput.codePointAt(0).toString(16).toUpperCase();
                 utfCode = utfCode.length > 4 ? utfCode : ("0000" + utfCode).slice(-4);
-                logs.push("> Preprocess " + nextInput + " (U+" + utfCode + ")");
+                //logall.push("> Preprocess " + nextInput + " (U+" + utfCode + ")");
                 if (/[\u0001-\u0008\u000E-\u001F\u007F-\u009F\uFDD0-\uFDEF]|\u000B|\uFFFE|\uFFFF/.test(nextInput)) {
-                    logs.push(">> Parse error|Preprocess: Control character|Ignored");
+                    //logall.push(">> Parse error|Preprocess: Control character|Ignored");
                 }
                 else if (nextInput == "\u000A" && stream[currentInput] == "\u000D") {
-                    logs.push(">> Ignored|Preprocess: LF follows CR|Ignored");
+                    //logall.push(">> Ignored|Preprocess: LF follows CR|Ignored");
                 }
                 else if (nextInput == "\u000D") {
                     streamTemp += "\u000A";
-                    logs.push(">> Consumed|Preprocess: CR character|Converted to LF");
+                    //logall.push(">> Consumed|Preprocess: CR character|Converted to LF");
                 }
                 else {
                     streamTemp += nextInput;
-                    logs.push(">> Consumed|Preprocess: Normal character|Consumed");
+                    //logall.push(">> Consumed|Preprocess: Normal character|Consumed");
                 }
             }
-            logs.push("End function Preprocessing");
+            //logall.push("End function Preprocessing");
             return streamTemp;
         };
 
@@ -136,7 +132,7 @@ module.exports = {
                 xmlns: "http://www.w3.org/2000/xmlns/"
             };
             var nsList = ["http://www.w3.org/1999/xhtml", "http://www.w3.org/1998/Math/MathML", "http://www.w3.org/2000/svg", "http://www.w3.org/1999/xlink", "http://www.w3.org/XML/1998/namespace", "http://www.w3.org/2000/xmlns/"];
-            logs.push("Call function Parsing");
+            logall.push("Call function Parsing");
 
             function switchMode(target, reprocess, returnFlag, callback) {
                 reProcess = reprocess ? reprocess : false;
@@ -358,15 +354,15 @@ module.exports = {
                 var utfCode = (currentInput < stream.length ? stream[currentInput].codePointAt(0).toString(16).toUpperCase() : "EOF");
                 utfCode = utfCode.length > 4 ? utfCode : ("0000" + utfCode).slice(-4);
                 if (eof)
-                    logs.push(">> Consumed " + (currentInput < stream.length ? stream[currentInput] + " (U+" + utfCode + ")" : "EOF"));
+                    logall.push(">> Consumed " + (currentInput < stream.length ? stream[currentInput] + " (U+" + utfCode + ")" : "EOF"));
                 else
-                    logs.push(">> Consumed " + stream[currentInput] + " (U+" + utfCode + ")");
+                    logall.push(">> Consumed " + stream[currentInput] + " (U+" + utfCode + ")");
             }
 
             function reconsumeCurrent() {
                 var utfCode = (currentInput < stream.length ? stream[currentInput].codePointAt(0).toString(16).toUpperCase() : "EOF");
                 utfCode = utfCode.length > 4 ? utfCode : ("0000" + utfCode).slice(-4);
-                logs.push(">> Reconsume: " + (currentInput < stream.length ? stream[currentInput] + " (U+" + utfCode + ")" : "EOF"));
+                logall.push(">> Reconsume: " + (currentInput < stream.length ? stream[currentInput] + " (U+" + utfCode + ")" : "EOF"));
                 nextInput = currentInput;
                 currentInput--;
             }
@@ -918,14 +914,14 @@ module.exports = {
                     }
                 }
 
-                logs.push("Call function Tree Construction (12.2.5)");
+                logall.push("Call function Tree Construction (12.2.5)");
 
                 while (reProcess) {
                     reProcess = false;
-                    logs.push('> Switch to the "' + mode[mode.length - 1] + '" insertion mode');
+                    logall.push('> Switch to the "' + mode[mode.length - 1] + '" insertion mode');
                     switch (mode[mode.length - 1]) {
                         case 'Initial': //12.2.5.4.1 The "initial" insertion mode
-                            logs[logs.length - 1] += " (12.2.5.4.1)";
+                            logall[logall.length - 1] += " (12.2.5.4.1)";
                             var flag = false;
                             switch (token[0]) {
                                 case "Character":
@@ -1004,7 +1000,7 @@ module.exports = {
                             }
                             break;
                         case 'Before html': //12.2.5.4.2 The "before html" insertion mode
-                            logs[logs.length - 1] += " (12.2.5.4.2)";
+                            logall[logall.length - 1] += " (12.2.5.4.2)";
                             var flag = false;
                             switch (token[0]) {
                                 case "DOCTYPE":
@@ -1048,7 +1044,7 @@ module.exports = {
                             }
                             break;
                         case 'Before head': //12.2.5.4.3 The "before head" insertion mode
-                            logs[logs.length - 1] += " (12.2.5.4.3)";
+                            logall[logall.length - 1] += " (12.2.5.4.3)";
                             var flag = false;
                             switch (token[0]) {
                                 case "DOCTYPE":
@@ -1089,7 +1085,7 @@ module.exports = {
                             }
                             break;
                         case 'In head': //12.2.5.4.4 The "in head" insertion mode
-                            logs[logs.length - 1] += " (12.2.5.4.4)";
+                            logall[logall.length - 1] += " (12.2.5.4.4)";
                             var flag = false;
                             switch (token[0]) {
                                 case "DOCTYPE":
@@ -1192,7 +1188,7 @@ module.exports = {
                             }
                             break;
                         case 'In head noscript': //12.2.5.4.5 The "in head noscript" insertion mode
-                            logs[logs.length - 1] += " (12.2.5.4.5)";
+                            logall[logall.length - 1] += " (12.2.5.4.5)";
                             var flag = false;
                             switch (token[0]) {
                                 case "DOCTYPE":
@@ -1238,7 +1234,7 @@ module.exports = {
                             }
                             break;
                         case 'After head': //12.2.5.4.6 The "after head" insertion mode
-                            logs[logs.length - 1] += " (12.2.5.4.6)";
+                            logall[logall.length - 1] += " (12.2.5.4.6)";
                             var flag = false;
                             switch (token[0]) {
                                 case "DOCTYPE":
@@ -1293,7 +1289,7 @@ module.exports = {
                             }
                             break;
                         case 'In body': //12.2.5.4.7 The "in body" insertion mode
-                            logs[logs.length - 1] += " (12.2.5.4.7)";
+                            logall[logall.length - 1] += " (12.2.5.4.7)";
                             var flag = false;
                             var flagBody = function () {
                                 for (var i in stackOpen)
@@ -1867,7 +1863,7 @@ module.exports = {
                             }
                             break;
                         case 'Text': //12.2.5.4.8 The "text" insertion mode
-                            logs[logs.length - 1] += " (12.2.5.4.8)";
+                            logall[logall.length - 1] += " (12.2.5.4.8)";
                             switch (token[0]) {
                                 case "Character":
                                     insertCharacter(token[1]);
@@ -1897,7 +1893,7 @@ module.exports = {
                             }
                             break;
                         case 'In table': //12.2.5.4.9 The "in table" insertion mode
-                            logs[logs.length - 1] += " (12.2.5.4.9)";
+                            logall[logall.length - 1] += " (12.2.5.4.9)";
                             var flag = false;
                             switch (token[0]) {
                                 case "DOCTYPE":
@@ -2022,7 +2018,7 @@ module.exports = {
                             }
                             break;
                         case 'In table text': //12.2.5.4.10 The "in table text" insertion mode
-                            logs[logs.length - 1] += " (12.2.5.4.10)";
+                            logall[logall.length - 1] += " (12.2.5.4.10)";
                             switch (token[0]) {
                                 case "Character":
                                     if (token[1] == "\u0000")
@@ -2059,7 +2055,7 @@ module.exports = {
                             }
                             break;
                         case 'In caption': //12.2.5.4.11 The "in caption" insertion mode
-                            logs[logs.length - 1] += " (12.2.5.4.11)";
+                            logall[logall.length - 1] += " (12.2.5.4.11)";
                             var flag = false;
                             var flag2 = false;
                             switch (token[0]) {
@@ -2105,7 +2101,7 @@ module.exports = {
                             }
                             break;
                         case 'In column group': //12.2.5.4.12 The "in column group" insertion mode
-                            logs[logs.length - 1] += " (12.2.5.4.12)";
+                            logall[logall.length - 1] += " (12.2.5.4.12)";
                             var flag = false;
                             switch (token[0]) {
                                 case "DOCTYPE":
@@ -2166,7 +2162,7 @@ module.exports = {
                             }
                             break;
                         case 'In table body': //12.2.5.4.13 The "in table body" insertion mode
-                            logs[logs.length - 1] += " (12.2.5.4.13)";
+                            logall[logall.length - 1] += " (12.2.5.4.13)";
                             var flag = false;
                             switch (token[0]) {
                                 case "StartTag":
@@ -2218,7 +2214,7 @@ module.exports = {
                             }
                             break;
                         case 'In row': //12.2.5.4.14 The "in row" insertion mode
-                            logs[logs.length - 1] += " (12.2.5.4.14)";
+                            logall[logall.length - 1] += " (12.2.5.4.14)";
                             switch (token[0]) {
                                 case "StartTag":
                                     if (token[1] == "th" || token[1] == "td") {
@@ -2272,7 +2268,7 @@ module.exports = {
                             }
                             break;
                         case 'In cell': //12.2.5.4.15 The "in cell" insertion mode
-                            logs[logs.length - 1] += " (12.2.5.4.15)";
+                            logall[logall.length - 1] += " (12.2.5.4.15)";
                             switch (token[0]) {
                                 case "StartTag":
                                     if (["caption", "col", "colgroup", "tbody", "td", "tfoot", "th", "thead", "tr"].indexOf(token[1]) != -1) {
@@ -2318,7 +2314,7 @@ module.exports = {
                             }
                             break;
                         case 'In select': //12.2.5.4.16 The "in select" insertion mode
-                            logs[logs.length - 1] += " (12.2.5.4.16)";
+                            logall[logall.length - 1] += " (12.2.5.4.16)";
                             var flag = false;
                             switch (token[0]) {
                                 case "DOCTYPE":
@@ -2416,7 +2412,7 @@ module.exports = {
                             }
                             break;
                         case 'In select in table': //12.2.5.4.17 The "in select in table" insertion mode
-                            logs[logs.length - 1] += " (12.2.5.4.17)";
+                            logall[logall.length - 1] += " (12.2.5.4.17)";
                             switch (token[0]) {
                                 case "StartTag":
                                     if (["caption", "table", "tbody", "tfoot", "thead", "tr", "td", "th"].indexOf(token[1]) != -1) {
@@ -2452,7 +2448,7 @@ module.exports = {
                             }
                             break;
                         case 'In template': //12.2.5.4.18 The "in template" insertion mode
-                            logs[logs.length - 1] += " (12.2.5.4.18)";
+                            logall[logall.length - 1] += " (12.2.5.4.18)";
                             switch (token[0]) {
                                 case "DOCTYPE":
                                 case "Comment":
@@ -2517,7 +2513,7 @@ module.exports = {
                             }
                             break;
                         case 'After body': //12.2.5.4.19 The "after body" insertion mode
-                            logs[logs.length - 1] += " (12.2.5.4.19)";
+                            logall[logall.length - 1] += " (12.2.5.4.19)";
                             switch (token[0]) {
                                 case "DOCTYPE":
                                     emit("ParseError");
@@ -2562,7 +2558,7 @@ module.exports = {
                             }
                             break;
                         case 'In frameset': //12.2.5.4.20 The "in frameset" insertion mode
-                            logs[logs.length - 1] += " (12.2.5.4.20)";
+                            logall[logall.length - 1] += " (12.2.5.4.20)";
                             switch (token[0]) {
                                 case "DOCTYPE":
                                     emit("ParseError");
@@ -2614,7 +2610,7 @@ module.exports = {
                             }
                             break;
                         case 'After frameset': //12.2.5.4.21 The "after frameset" insertion mode
-                            logs[logs.length - 1] += " (12.2.5.4.21)";
+                            logall[logall.length - 1] += " (12.2.5.4.21)";
                             switch (token[0]) {
                                 case "DOCTYPE":
                                     emit("ParseError");
@@ -2645,7 +2641,7 @@ module.exports = {
                             }
                             break;
                         case 'After after body': //12.2.5.4.22 The "after after body" insertion mode
-                            logs[logs.length - 1] += " (12.2.5.4.22)";
+                            logall[logall.length - 1] += " (12.2.5.4.22)";
                             switch (token[0]) {
                                 case "DOCTYPE":
                                     switchMode("In body", true, true);
@@ -2679,7 +2675,7 @@ module.exports = {
                             }
                             break;
                         case 'After after frameset': //12.2.5.4.23 The "after after frameset" insertion mode
-                            logs[logs.length - 1] += " (12.2.5.4.23)";
+                            logall[logall.length - 1] += " (12.2.5.4.23)";
                             switch (token[0]) {
                                 case "DOCTYPE":
                                     switchMode("In body", true, true);
@@ -2721,12 +2717,12 @@ module.exports = {
                         }
                     }
                 }
-                logs.push("End function Tree Construction");
+                logall.push("End function Tree Construction");
             };
 
             //12.2.5
             function treeConstructionDispatcher(token) {
-                logs.push("Call function Tree Construction Dispatcher (12.2.5)");
+                logall.push("Call function Tree Construction Dispatcher (12.2.5)");
                 adjustedNode = fragmentParse ? context : currentNode();
                 var resForeign = {reprocess: true};
                 while (resForeign.reprocess) {
@@ -2736,7 +2732,7 @@ module.exports = {
                     else
                         resForeign = parsingForeignContent(token);
                 }
-                logs.push("End function Tree Construction Dispatcher (12.2.5)");
+                logall.push("End function Tree Construction Dispatcher (12.2.5)");
             }
 
             //Handling emitation of function Tokenization
@@ -2818,7 +2814,7 @@ module.exports = {
 
 //12.2.4.69 Tokenizing character references
                 var characterReference = function (addChar) {
-                    logs.push("Call function Character Reference (12.2.4.69)");
+                    logall.push("Call function Character Reference (12.2.4.69)");
                     var hex;
                     var consume = "";
                     var charList = [[0x00, "\uFFFD"], [0x80, "\u20AC"], [0x82, "\u201A"], [0x83, "\u0192"], [0x84, "\u201E"], [0x85, "\u2026"], [0x86, "\u2020"], [0x87, "\u2021"], [0x88, "\u02C6"], [0x89, "\u2030"], [0x8A, "\u0160"], [0x8B, "\u2039"], [0x8C, "\u0152"], [0x8E, "\u017D"], [0x91, "\u2018"], [0x92, "\u2019"], [0x93, "\u201C"], [0x94, "\u201D"], [0x95, "\u2022"], [0x96, "\u2013"], [0x97, "\u2014"], [0x98, "\u02DC"], [0x99, "\u2122"], [0x9A, "\u0161"], [0x9B, "\u203A"], [0x9C, "\u0153"], [0x9E, "\u017E"], [0x9F, "\u0178"]];
@@ -2960,13 +2956,13 @@ module.exports = {
                         tokenEnd.push(tag);
                 };
 
-                logs.push("Call function Tokenization (12.2.4)");
+                logall.push("Call function Tokenization (12.2.4)");
 
                 while (state[state.length - 1] !== null) {
-                    logs.push("> Switch to " + state[state.length - 1]);
+                    logall.push("> Switch to " + state[state.length - 1]);
                     switch (state[state.length - 1]) {
                         case 'Data state': //12.2.4.1 Data state
-                            logs[logs.length - 1] += " (12.2.4.1)";
+                            logall[logall.length - 1] += " (12.2.4.1)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u0026": //Ampersand (&)
@@ -2990,7 +2986,7 @@ module.exports = {
                             }
                             break;
                         case 'Character reference in data state': //12.2.4.2 Character reference in data state
-                            logs[logs.length - 1] += " (12.2.4.2)";
+                            logall[logall.length - 1] += " (12.2.4.2)";
                             state.push("Data state");
                             var tokenRef = characterReference(null);
                             if (tokenRef == null)
@@ -2999,7 +2995,7 @@ module.exports = {
                                 emit("Character", tokenRef);
                             break;
                         case 'RCDATA state': //12.2.4.3 RCDATA state
-                            logs[logs.length - 1] += " (12.2.4.3)";
+                            logall[logall.length - 1] += " (12.2.4.3)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u0026": //Ampersand (&)
@@ -3021,7 +3017,7 @@ module.exports = {
                             }
                             break;
                         case 'Character reference in RCDATA state': //12.2.4.4 Character reference in RCDATA state
-                            logs[logs.length - 1] += " (12.2.4.4)";
+                            logall[logall.length - 1] += " (12.2.4.4)";
                             state.push("RCDATA state");
                             var tokenRef = characterReference(null);
                             if (tokenRef == null)
@@ -3030,7 +3026,7 @@ module.exports = {
                                 emit("Character", tokenRef);
                             break;
                         case 'RAWTEXT state': //12.2.4.5 RAWTEXT state
-                            logs[logs.length - 1] += " (12.2.4.5)";
+                            logall[logall.length - 1] += " (12.2.4.5)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u003C": //Less-than sign (<)
@@ -3049,7 +3045,7 @@ module.exports = {
                             }
                             break;
                         case 'Script data state': //12.2.4.6 Script data state
-                            logs[logs.length - 1] += " (12.2.4.6)";
+                            logall[logall.length - 1] += " (12.2.4.6)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u003C": //Less-than sign (<)
@@ -3068,7 +3064,7 @@ module.exports = {
                             }
                             break;
                         case 'PLAINTEXT state': //12.2.4.7 PLAINTEXT state
-                            logs[logs.length - 1] += " (12.2.4.7)";
+                            logall[logall.length - 1] += " (12.2.4.7)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u0000": //NULL
@@ -3084,7 +3080,7 @@ module.exports = {
                             }
                             break;
                         case 'Tag open state': //12.2.4.8 Tag open state
-                            logs[logs.length - 1] += " (12.2.4.8)";
+                            logall[logall.length - 1] += " (12.2.4.8)";
                             consumeNext(false);
                             switch (stream[currentInput]) {
                                 case "\u0021": //Exclamation mark (!)
@@ -3116,7 +3112,7 @@ module.exports = {
                             }
                             break;
                         case 'End tag open state': //12.2.4.9 End tag open state
-                            logs[logs.length - 1] += " (12.2.4.9)";
+                            logall[logall.length - 1] += " (12.2.4.9)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u003E": //Greater-than sign (>)
@@ -3147,7 +3143,7 @@ module.exports = {
                             }
                             break;
                         case 'Tag name state': //12.2.4.10 Tag name state
-                            logs[logs.length - 1] += " (12.2.4.10)";
+                            logall[logall.length - 1] += " (12.2.4.10)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u0009": //Character tabulation (tab)
@@ -3182,7 +3178,7 @@ module.exports = {
                             }
                             break;
                         case 'RCDATA less-than sign state': //12.2.4.11 RCDATA less-than sign state
-                            logs[logs.length - 1] += " (12.2.4.11)";
+                            logall[logall.length - 1] += " (12.2.4.11)";
                             consumeNext(false);
                             switch (stream[currentInput]) {
                                 case "\u002F": //Solidus (/)
@@ -3197,7 +3193,7 @@ module.exports = {
                             }
                             break;
                         case 'RCDATA end tag open state': //12.2.4.12 RCDATA end tag open state
-                            logs[logs.length - 1] += " (12.2.4.12)";
+                            logall[logall.length - 1] += " (12.2.4.12)";
                             consumeNext(false);
                             if ('A' <= stream[currentInput] && stream[currentInput] <= 'Z') {
                                 tokenTag.push(new tokenTags("EndTag", stream[currentInput].toLowerCase()));
@@ -3218,7 +3214,7 @@ module.exports = {
                             }
                             break;
                         case 'RCDATA end tag name state': //12.2.4.13 RCDATA end tag name state
-                            logs[logs.length - 1] += " (12.2.4.13)";
+                            logall[logall.length - 1] += " (12.2.4.13)";
                             consumeNext(false);
                             var flagAny = false;
                             switch (stream[currentInput]) {
@@ -3268,7 +3264,7 @@ module.exports = {
                             }
                             break;
                         case 'RAWTEXT less-than sign state': //12.2.4.14 RAWTEXT less-than sign state
-                            logs[logs.length - 1] += " (12.2.4.14)";
+                            logall[logall.length - 1] += " (12.2.4.14)";
                             consumeNext(false);
                             if (stream[currentInput] == "\u002F") { //Solidus (/)
                                 tempBuffer = "";
@@ -3281,7 +3277,7 @@ module.exports = {
                             }
                             break;
                         case 'RAWTEXT end tag open state': //12.2.4.15 RAWTEXT end tag open state
-                            logs[logs.length - 1] += " (12.2.4.15)";
+                            logall[logall.length - 1] += " (12.2.4.15)";
                             consumeNext(false);
                             if ('A' <= stream[currentInput] && stream[currentInput] <= 'Z') {
                                 tokenTag.push(new tokenTags("EndTag", stream[currentInput].toLowerCase()));
@@ -3302,7 +3298,7 @@ module.exports = {
                             }
                             break;
                         case 'RAWTEXT end tag name state': //12.2.4.16 RAWTEXT end tag name state
-                            logs[logs.length - 1] += " (12.2.4.16)";
+                            logall[logall.length - 1] += " (12.2.4.16)";
                             consumeNext(false);
                             var flagAny = false;
                             switch (stream[currentInput]) {
@@ -3352,7 +3348,7 @@ module.exports = {
                             }
                             break;
                         case 'Script data less-than sign state': //12.2.4.17 Script data less-than sign state
-                            logs[logs.length - 1] += " (12.2.4.17)";
+                            logall[logall.length - 1] += " (12.2.4.17)";
                             consumeNext(false);
                             switch (stream[currentInput]) {
                                 case "\u002F": //Solidus (/)
@@ -3372,7 +3368,7 @@ module.exports = {
                             }
                             break;
                         case 'Script data end tag open state': //12.2.4.18 Script data end tag open state
-                            logs[logs.length - 1] += " (12.2.4.18)";
+                            logall[logall.length - 1] += " (12.2.4.18)";
                             consumeNext(false);
                             if ('A' <= stream[currentInput] && stream[currentInput] <= 'Z') {
                                 tokenTag.push(new tokenTags("EndTag", stream[currentInput].toLowerCase()));
@@ -3393,7 +3389,7 @@ module.exports = {
                             }
                             break;
                         case 'Script data end tag name state': //12.2.4.19 Script data end tag name state
-                            logs[logs.length - 1] += " (12.2.4.19)";
+                            logall[logall.length - 1] += " (12.2.4.19)";
                             consumeNext(false);
                             var flagAny = false;
                             switch (stream[currentInput]) {
@@ -3443,7 +3439,7 @@ module.exports = {
                             }
                             break;
                         case 'Script data escape start state': //12.2.4.20 Script data escape start state
-                            logs[logs.length - 1] += " (12.2.4.20)";
+                            logall[logall.length - 1] += " (12.2.4.20)";
                             consumeNext(false);
                             if (stream[currentInput] == "\u002D") { //Hypen-minus (-)
                                 state.push("Script data escape start dash state");
@@ -3455,7 +3451,7 @@ module.exports = {
                             }
                             break;
                         case 'Script data escape start dash state': //12.2.4.21 Script data escape start dash state
-                            logs[logs.length - 1] += " (12.2.4.21)";
+                            logall[logall.length - 1] += " (12.2.4.21)";
                             consumeNext(false);
                             if (stream[currentInput] == "\u002D") { //Hypen-minus (-)
                                 state.push("Script data escaped dash dash state");
@@ -3467,7 +3463,7 @@ module.exports = {
                             }
                             break;
                         case 'Script data escaped state': //12.2.4.22 Script data escaped state
-                            logs[logs.length - 1] += " (12.2.4.22)";
+                            logall[logall.length - 1] += " (12.2.4.22)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u002D": //Hyphen-minus (-)
@@ -3493,7 +3489,7 @@ module.exports = {
                             }
                             break;
                         case 'Script data escaped dash state': //12.2.4.23 Script data escaped dash state
-                            logs[logs.length - 1] += " (12.2.4.23)";
+                            logall[logall.length - 1] += " (12.2.4.23)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u002D": //Hyphen-minus (-)
@@ -3522,7 +3518,7 @@ module.exports = {
                             }
                             break;
                         case 'Script data escaped dash dash state': //12.2.4.24 Script data escaped dash dash state
-                            logs[logs.length - 1] += " (12.2.4.24)";
+                            logall[logall.length - 1] += " (12.2.4.24)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u002D": //Hyphen-minus (-)
@@ -3554,7 +3550,7 @@ module.exports = {
                             }
                             break;
                         case 'Script data escaped less-than sign state': //12.2.4.25 Script data escaped less-than sign state
-                            logs[logs.length - 1] += " (12.2.4.25)";
+                            logall[logall.length - 1] += " (12.2.4.25)";
                             consumeNext(false);
                             if (stream[currentInput] == "\u002F") { //Solidus (/)
                                 tempBuffer = "";
@@ -3581,7 +3577,7 @@ module.exports = {
                             }
                             break;
                         case 'Script data escaped end tag open state': //12.2.4.26 Script data escaped end tag open state
-                            logs[logs.length - 1] += " (12.2.4.26)";
+                            logall[logall.length - 1] += " (12.2.4.26)";
                             consumeNext(false);
                             if ('A' <= stream[currentInput] && stream[currentInput] <= 'Z') {
                                 tokenTag.push(new tokenTags("EndTag", stream[currentInput].toLowerCase()));
@@ -3602,7 +3598,7 @@ module.exports = {
                             }
                             break;
                         case 'Script data escaped end tag name state': //12.2.4.27 Script data escaped end tag name state
-                            logs[logs.length - 1] += " (12.2.4.27)";
+                            logall[logall.length - 1] += " (12.2.4.27)";
                             consumeNext(false);
                             var flagAny = false;
                             switch (stream[currentInput]) {
@@ -3652,7 +3648,7 @@ module.exports = {
                             }
                             break;
                         case 'Script data double escape start state': //12.2.4.28 Script data double escape start state
-                            logs[logs.length - 1] += " (12.2.4.28)";
+                            logall[logall.length - 1] += " (12.2.4.28)";
                             consumeNext(false);
                             switch (stream[currentInput]) {
                                 case "\u0009": //Character tabulation (tab)
@@ -3684,7 +3680,7 @@ module.exports = {
                             }
                             break;
                         case 'Script data double escaped state': //12.2.4.29 Script data double escaped state
-                            logs[logs.length - 1] += " (12.2.4.29)";
+                            logall[logall.length - 1] += " (12.2.4.29)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u002D": //Hyphen-minus (-)
@@ -3712,7 +3708,7 @@ module.exports = {
                             }
                             break;
                         case 'Script data double escaped dash state': //12.2.4.30 Script data double escaped dash state
-                            logs[logs.length - 1] += " (12.2.4.30)";
+                            logall[logall.length - 1] += " (12.2.4.30)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u002D": //Hyphen-minus (-)
@@ -3742,7 +3738,7 @@ module.exports = {
                             }
                             break;
                         case 'Script data double escaped dash dash state': //12.2.4.31 Script data double escaped dash dash state
-                            logs[logs.length - 1] += " (12.2.4.31)";
+                            logall[logall.length - 1] += " (12.2.4.31)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u002D": //Hyphen-minus (-)
@@ -3775,7 +3771,7 @@ module.exports = {
                             }
                             break;
                         case 'Script data double escaped less-than sign state': //12.2.4.32 Script data double escaped less-than sign state
-                            logs[logs.length - 1] += " (12.2.4.32)";
+                            logall[logall.length - 1] += " (12.2.4.32)";
                             consumeNext(false);
                             if (stream[currentInput] == "\u002F") { //Solidus (/)
                                 tempBuffer = "";
@@ -3788,7 +3784,7 @@ module.exports = {
                             }
                             break;
                         case 'Script data double escape end state': //12.2.4.33 Script data double escape end state
-                            logs[logs.length - 1] += " (12.2.4.33)";
+                            logall[logall.length - 1] += " (12.2.4.33)";
                             consumeNext(false);
                             switch (stream[currentInput]) {
                                 case "\u0009": //Character tabulation (tab)
@@ -3820,7 +3816,7 @@ module.exports = {
                             }
                             break;
                         case 'Before attribute name state': //12.2.4.34 Before attribute name state
-                            logs[logs.length - 1] += " (12.2.4.34)";
+                            logall[logall.length - 1] += " (12.2.4.34)";
                             consumeNext(true);
                             var flagAny = false;
                             switch (stream[currentInput]) {
@@ -3868,7 +3864,7 @@ module.exports = {
                             }
                             break;
                         case 'Attribute name state': //12.2.4.35 Attribute name state
-                            logs[logs.length - 1] += " (12.2.4.35)";
+                            logall[logall.length - 1] += " (12.2.4.35)";
                             consumeNext(true);
                             var flagAny = false;
                             switch (stream[currentInput]) {
@@ -3914,7 +3910,7 @@ module.exports = {
                                 tokenTag[tokenTag.length - 1].attribute[tokenTag[tokenTag.length - 1].attribute.length - 1].name += stream[currentInput];
                             break;
                         case 'After attribute name state': //12.2.4.36 After attribute name state
-                            logs[logs.length - 1] += " (12.2.4.36)";
+                            logall[logall.length - 1] += " (12.2.4.36)";
                             consumeNext(true);
                             var flagAny = false;
                             switch (stream[currentInput]) {
@@ -3964,7 +3960,7 @@ module.exports = {
                             }
                             break;
                         case 'Before attribute value state': //12.2.4.37 Before attribute value state
-                            logs[logs.length - 1] += " (12.2.4.37)";
+                            logall[logall.length - 1] += " (12.2.4.37)";
                             consumeNext(true);
                             var flagAny = false;
                             switch (stream[currentInput]) {
@@ -4015,7 +4011,7 @@ module.exports = {
                             }
                             break;
                         case 'Attribute value (double-quoted) state': //12.2.4.38 Attribute value (double-quoted) state
-                            logs[logs.length - 1] += " (12.2.4.38)";
+                            logall[logall.length - 1] += " (12.2.4.38)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u0022": //Quotation mark (")
@@ -4042,7 +4038,7 @@ module.exports = {
                             }
                             break;
                         case 'Attribute value (single-quoted) state': //12.2.4.39 Attribute value (single-quoted) state
-                            logs[logs.length - 1] += " (12.2.4.39)";
+                            logall[logall.length - 1] += " (12.2.4.39)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u0027": //Apostrophe (')
@@ -4069,7 +4065,7 @@ module.exports = {
                             }
                             break;
                         case 'Attribute value (unquoted) state': //12.2.4.40 Attribute value (unquoted) state
-                            logs[logs.length - 1] += " (12.2.4.40)";
+                            logall[logall.length - 1] += " (12.2.4.40)";
                             consumeNext(true);
                             var flagAny = false;
                             switch (stream[currentInput]) {
@@ -4114,7 +4110,7 @@ module.exports = {
                                 tokenTag[tokenTag.length - 1].attribute[tokenTag[tokenTag.length - 1].attribute.length - 1].value += stream[currentInput];
                             break;
                         case 'Character reference in attribute value state': //12.2.4.41 Character reference in attribute value state
-                            logs[logs.length - 1] += " (12.2.4.41)";
+                            logall[logall.length - 1] += " (12.2.4.41)";
                             var tokenRef = characterReference(addChar);
                             if (tokenRef == null)
                                 tokenTag[tokenTag.length - 1].attribute[tokenTag[tokenTag.length - 1].attribute.length - 1].value += "\u0026";
@@ -4123,7 +4119,7 @@ module.exports = {
                             state.push(refReturn);
                             break;
                         case 'After attribute value (quoted) state': //12.2.4.42 After attribute value (quoted) state
-                            logs[logs.length - 1] += " (12.2.4.42)";
+                            logall[logall.length - 1] += " (12.2.4.42)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u0009": //Character tabulation (tab)
@@ -4154,7 +4150,7 @@ module.exports = {
                             }
                             break;
                         case 'Self-closing start tag state': //12.2.4.43 Self-closing start tag state
-                            logs[logs.length - 1] += " (12.2.4.43)";
+                            logall[logall.length - 1] += " (12.2.4.43)";
                             consumeNext(true);
                             if (stream[currentInput] == "\u003E") {
                                 tokenTag[tokenTag.length - 1].flag = true;
@@ -4173,7 +4169,7 @@ module.exports = {
                             }
                             break;
                         case 'Bogus comment state': //12.2.4.44 Bogus comment state
-                            logs[logs.length - 1] += " (12.2.4.44)";
+                            logall[logall.length - 1] += " (12.2.4.44)";
                             var trigger = stream[currentInput];
                             var consume = "";
                             while (stream[currentInput] != "\u003E" && currentInput < stream.length) {
@@ -4192,7 +4188,7 @@ module.exports = {
                                 reconsumeCurrent();
                             break;
                         case 'Markup declaration open state': //12.2.4.45 Markup declaration open state
-                            logs[logs.length - 1] += " (12.2.4.45)";
+                            logall[logall.length - 1] += " (12.2.4.45)";
                             if (stream.slice(currentInput + 1, currentInput + 3) == "\u002D\u002D") {
                                 for (var i = 0; i < 2; i++)
                                     consumeNext(false);
@@ -4215,7 +4211,7 @@ module.exports = {
                             }
                             break;
                         case 'Comment start state': //12.2.4.46 Comment start state
-                            logs[logs.length - 1] += " (12.2.4.46)";
+                            logall[logall.length - 1] += " (12.2.4.46)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u002D": //Hypen-minus (-)
@@ -4246,7 +4242,7 @@ module.exports = {
                             }
                             break;
                         case 'Comment start dash state': //12.2.4.47 Comment start dash state
-                            logs[logs.length - 1] += " (12.2.4.47)";
+                            logall[logall.length - 1] += " (12.2.4.47)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u002D": //Hypen-minus (-)
@@ -4277,7 +4273,7 @@ module.exports = {
                             }
                             break;
                         case 'Comment state': //12.2.4.48 Comment state
-                            logs[logs.length - 1] += " (12.2.4.48)";
+                            logall[logall.length - 1] += " (12.2.4.48)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u002D": //Hypen-minus (-)
@@ -4300,7 +4296,7 @@ module.exports = {
                             }
                             break;
                         case 'Comment end dash state': //12.2.4.49 Comment end dash state
-                            logs[logs.length - 1] += " (12.2.4.49)";
+                            logall[logall.length - 1] += " (12.2.4.49)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u002D": //Hypen-minus (-)
@@ -4326,7 +4322,7 @@ module.exports = {
                             }
                             break;
                         case 'Comment end state': //12.2.4.50 Comment end state
-                            logs[logs.length - 1] += " (12.2.4.50)";
+                            logall[logall.length - 1] += " (12.2.4.50)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u003E": //Greater-than sign (>)
@@ -4361,7 +4357,7 @@ module.exports = {
                             }
                             break;
                         case 'Comment end bang state': //12.2.4.51 Comment end bang state
-                            logs[logs.length - 1] += " (12.2.4.51)";
+                            logall[logall.length - 1] += " (12.2.4.51)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u002D": //Hypen-minus (-)
@@ -4392,7 +4388,7 @@ module.exports = {
                             }
                             break;
                         case 'DOCTYPE state': //12.2.4.52 DOCTYPE state
-                            logs[logs.length - 1] += " (12.2.4.52)";
+                            logall[logall.length - 1] += " (12.2.4.52)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u0009": //Character tabulation (tab)
@@ -4418,7 +4414,7 @@ module.exports = {
                             }
                             break;
                         case 'Before DOCTYPE name state': //12.2.4.53 Before DOCTYPE name state
-                            logs[logs.length - 1] += " (12.2.4.53)";
+                            logall[logall.length - 1] += " (12.2.4.53)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u0009": //Character tabulation (tab)
@@ -4457,7 +4453,7 @@ module.exports = {
                             }
                             break;
                         case 'DOCTYPE name state': //12.2.4.54 DOCTYPE name state
-                            logs[logs.length - 1] += " (12.2.4.54)";
+                            logall[logall.length - 1] += " (12.2.4.54)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u0009": //Character tabulation (tab)
@@ -4490,7 +4486,7 @@ module.exports = {
                             }
                             break;
                         case 'After DOCTYPE name state': //12.2.4.55 After DOCTYPE name state
-                            logs[logs.length - 1] += " (12.2.4.55)";
+                            logall[logall.length - 1] += " (12.2.4.55)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u0009": //Character tabulation (tab)
@@ -4529,7 +4525,7 @@ module.exports = {
                             }
                             break;
                         case 'After DOCTYPE public keyword state': //12.2.4.56 After DOCTYPE public keyword state
-                            logs[logs.length - 1] += " (12.2.4.56)";
+                            logall[logall.length - 1] += " (12.2.4.56)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u0009": //Character tabulation (tab)
@@ -4571,7 +4567,7 @@ module.exports = {
                             }
                             break;
                         case 'Before DOCTYPE public identifier state': //12.2.4.57 Before DOCTYPE public identifier state
-                            logs[logs.length - 1] += " (12.2.4.57)";
+                            logall[logall.length - 1] += " (12.2.4.57)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u0009": //Character tabulation (tab)
@@ -4610,7 +4606,7 @@ module.exports = {
                             }
                             break;
                         case 'DOCTYPE public identifier (double-quoted) state': //12.2.4.58 DOCTYPE public identifier (double-quoted) state
-                            logs[logs.length - 1] += " (12.2.4.58)";
+                            logall[logall.length - 1] += " (12.2.4.58)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u0022": //Quotation mark (")
@@ -4640,7 +4636,7 @@ module.exports = {
                             }
                             break;
                         case 'DOCTYPE public identifier (single-quoted) state': //12.2.4.59 DOCTYPE public identifier (single-quoted) state
-                            logs[logs.length - 1] += " (12.2.4.59)";
+                            logall[logall.length - 1] += " (12.2.4.59)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u0027": //Apostrophe (')
@@ -4670,7 +4666,7 @@ module.exports = {
                             }
                             break;
                         case 'After DOCTYPE public identifier state': //12.2.4.60 After DOCTYPE public identifier state
-                            logs[logs.length - 1] += " (12.2.4.60)";
+                            logall[logall.length - 1] += " (12.2.4.60)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u0009": //Character tabulation (tab)
@@ -4710,7 +4706,7 @@ module.exports = {
                             }
                             break;
                         case 'Between DOCTYPE public and system identifiers state': //12.2.4.61 Between DOCTYPE public and system identifiers state
-                            logs[logs.length - 1] += " (12.2.4.61)";
+                            logall[logall.length - 1] += " (12.2.4.61)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u0009": //Character tabulation (tab)
@@ -4747,7 +4743,7 @@ module.exports = {
                             }
                             break;
                         case 'After DOCTYPE system keyword state': //12.2.4.62 After DOCTYPE system keyword state
-                            logs[logs.length - 1] += " (12.2.4.62)";
+                            logall[logall.length - 1] += " (12.2.4.62)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u0009": //Character tabulation (tab)
@@ -4789,7 +4785,7 @@ module.exports = {
                             }
                             break;
                         case 'Before DOCTYPE system identifier state': //12.2.4.63 Before DOCTYPE system identifier state
-                            logs[logs.length - 1] += " (12.2.4.63)";
+                            logall[logall.length - 1] += " (12.2.4.63)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u0009": //Character tabulation (tab)
@@ -4828,7 +4824,7 @@ module.exports = {
                             }
                             break;
                         case 'DOCTYPE system identifier (double-quoted) state': //12.2.4.64 DOCTYPE system identifier (double-quoted) state
-                            logs[logs.length - 1] += " (12.2.4.64)";
+                            logall[logall.length - 1] += " (12.2.4.64)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u0022": //Quotation mark (")
@@ -4858,7 +4854,7 @@ module.exports = {
                             }
                             break;
                         case 'DOCTYPE system identifier (single-quoted) state': //12.2.4.65 DOCTYPE system identifier (single-quoted) state
-                            logs[logs.length - 1] += " (12.2.4.65)";
+                            logall[logall.length - 1] += " (12.2.4.65)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u0027": //Apostrophe (')
@@ -4888,7 +4884,7 @@ module.exports = {
                             }
                             break;
                         case 'After DOCTYPE system identifier state': //12.2.4.66 After DOCTYPE system identifier state
-                            logs[logs.length - 1] += " (12.2.4.66)";
+                            logall[logall.length - 1] += " (12.2.4.66)";
                             consumeNext(true);
                             switch (stream[currentInput]) {
                                 case "\u0009": //Character tabulation (tab)
@@ -4916,7 +4912,7 @@ module.exports = {
                             }
                             break;
                         case 'Bogus DOCTYPE state': //12.2.4.67 Bogus DOCTYPE state
-                            logs[logs.length - 1] += " (12.2.4.67)";
+                            logall[logall.length - 1] += " (12.2.4.67)";
                             consumeNext(true);
                             if (stream[currentInput] == "\u003E") {
                                 state.push("Data state");
@@ -4930,7 +4926,7 @@ module.exports = {
                             else;
                             break;
                         case 'CDATA section state': //12.2.4.68 CDATA section state
-                            logs[logs.length - 1] += " (12.2.4.68)";
+                            logall[logall.length - 1] += " (12.2.4.68)";
                             var consume = "";
                             state.push("Data state");
                             while (consume.slice(-3) != "\u005D\u005D\u003E" && currentInput < stream.length) {
@@ -4955,28 +4951,27 @@ module.exports = {
                             break;
                     }
                 }
-                logs.push("End function Tokenization");
+                logall.push("End function Tokenization");
             };
 
             tokenization(stream);
             nextInput++;
-            logs.push("End function Parsing");
+            logall.push("End function Parsing");
         };
 
         var streamR = preprocessing(stream);
-        logs.push("PRE-PROCESS TOKENS");
+        logall.push("PRE-PROCESS TOKENS");
         parsing(streamR);
         labelProcess++;
         emitList = [];
-        logs.push("PARSING");
+        logall.push("PARSING");
         parsing(streamR);
-        return ({token: emitList, doc: document});
         //console.log(emitList);
         //console.log(document);
-        //console.log(logs);
+        //console.log(logall);
         //console.log(streamR);
-        //console.log(emitList);
         //console.log(treeViewer(document));
         //console.log(document);
+        return ({token: emitList, doc: document, logs: logall});
     }
 }

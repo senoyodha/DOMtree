@@ -51,7 +51,7 @@ module.exports = {
             var flag = false;
             var streamTemp = "";
             var charEq = ["\u{1FFFE}", "\u{1FFFF}", "\u{2FFFE}", "\u{2FFFF}", "\u{3FFFE}", "\u{3FFFF}", "\u{4FFFE}", "\u{4FFFF}", "\u{5FFFE}", "\u{5FFFF}", "\u{6FFFE}", "\u{6FFFF}", "\u{7FFFE}", "\u{7FFFF}", "\u{8FFFE}", "\u{8FFFF}", "\u{9FFFE}", "\u{9FFFF}", "\u{AFFFE}", "\u{AFFFF}", "\u{BFFFE}", "\u{BFFFF}", "\u{CFFFE}", "\u{CFFFF}", "\u{DFFFE}", "\u{DFFFF}", "\u{EFFFE}", "\u{EFFFF}", "\u{FFFFE}", "\u{FFFFF}", "\u{10FFFE}", "\u{10FFFF}"];
-            //logall.push("Call function Preprocessing (12.2.2.5)");
+            logall.push("\nCall function Preprocessing (12.2.2.5)");
             for (var i = 0; i < stream.length; i++) {
                 if (flag == true) {
                     flag = false;
@@ -61,30 +61,30 @@ module.exports = {
                 currentInput = stream[i - 1];
                 next = stream[i + 1];
                 if (charEq.indexOf(nextInput + next) != -1) {
-                    //logall.push("> Preprocess " + nextInput + next + " (U+" + (nextInput + next).codePointAt(0).toString(16).toUpperCase() + ")");
-                    //logall.push(">> Parse error|Preprocess: Control character (astral)|Ignored");
+                    logall.push("> Preprocess " + nextInput + next + " (U+" + (nextInput + next).codePointAt(0).toString(16).toUpperCase() + ")");
+                    logall.push(">> Parse error|Preprocess: Control character (astral)|Ignored");
                     flag = true;
                     continue;
                 }
                 var utfCode = nextInput.codePointAt(0).toString(16).toUpperCase();
                 utfCode = utfCode.length > 4 ? utfCode : ("0000" + utfCode).slice(-4);
-                //logall.push("> Preprocess " + nextInput + " (U+" + utfCode + ")");
+                logall.push("> Preprocess " + nextInput + " (U+" + utfCode + ")");
                 if (/[\u0001-\u0008\u000E-\u001F\u007F-\u009F\uFDD0-\uFDEF]|\u000B|\uFFFE|\uFFFF/.test(nextInput)) {
-                    //logall.push(">> Parse error|Preprocess: Control character|Ignored");
+                    logall.push(">> Parse error|Preprocess: Control character|Ignored");
                 }
                 else if (nextInput == "\u000A" && stream[currentInput] == "\u000D") {
-                    //logall.push(">> Ignored|Preprocess: LF follows CR|Ignored");
+                    logall.push(">> Ignored|Preprocess: LF follows CR|Ignored");
                 }
                 else if (nextInput == "\u000D") {
                     streamTemp += "\u000A";
-                    //logall.push(">> Consumed|Preprocess: CR character|Converted to LF");
+                    logall.push(">> Consumed|Preprocess: CR character|Converted to LF");
                 }
                 else {
                     streamTemp += nextInput;
-                    //logall.push(">> Consumed|Preprocess: Normal character|Consumed");
+                    logall.push(">> Consumed|Preprocess: Normal character|Consumed");
                 }
             }
-            //logall.push("End function Preprocessing");
+            logall.push("End function Preprocessing\n");
             return streamTemp;
         };
 
@@ -914,7 +914,7 @@ module.exports = {
                     }
                 }
 
-                logall.push("Call function Tree Construction (12.2.5)");
+                logall.push("\nCall function Tree Construction (12.2.5)");
 
                 while (reProcess) {
                     reProcess = false;
@@ -2717,12 +2717,12 @@ module.exports = {
                         }
                     }
                 }
-                logall.push("End function Tree Construction");
+                logall.push("End function Tree Construction\n");
             };
 
             //12.2.5
             function treeConstructionDispatcher(token) {
-                logall.push("Call function Tree Construction Dispatcher (12.2.5)");
+                //logall.push("\nCall function Tree Construction Dispatcher (12.2.5)");
                 adjustedNode = fragmentParse ? context : currentNode();
                 var resForeign = {reprocess: true};
                 while (resForeign.reprocess) {
@@ -2732,7 +2732,7 @@ module.exports = {
                     else
                         resForeign = parsingForeignContent(token);
                 }
-                logall.push("End function Tree Construction Dispatcher (12.2.5)");
+                //logall.push("End function Tree Construction Dispatcher (12.2.5)\n");
             }
 
             //Handling emitation of function Tokenization
@@ -2773,6 +2773,7 @@ module.exports = {
                     emits = [type, value.name, value.publicId, value.systemId, value.flag == "on"];
                 else emits = [type, value];
                 emitList.push(emits);
+                logall.push("Emit: " + JSON.stringify(emits).replace(/\,/g, ", "));
                 if (labelProcess > 0) {
                     if (emits != "ParseError" && !ignoreTokenFlag)
                         treeConstructionDispatcher(emits);
@@ -2814,7 +2815,7 @@ module.exports = {
 
 //12.2.4.69 Tokenizing character references
                 var characterReference = function (addChar) {
-                    logall.push("Call function Character Reference (12.2.4.69)");
+                    logall.push("\nCall function Character Reference (12.2.4.69)");
                     var hex;
                     var consume = "";
                     var charList = [[0x00, "\uFFFD"], [0x80, "\u20AC"], [0x82, "\u201A"], [0x83, "\u0192"], [0x84, "\u201E"], [0x85, "\u2026"], [0x86, "\u2020"], [0x87, "\u2021"], [0x88, "\u02C6"], [0x89, "\u2030"], [0x8A, "\u0160"], [0x8B, "\u2039"], [0x8C, "\u0152"], [0x8E, "\u017D"], [0x91, "\u2018"], [0x92, "\u2019"], [0x93, "\u201C"], [0x94, "\u201D"], [0x95, "\u2022"], [0x96, "\u2013"], [0x97, "\u2014"], [0x98, "\u02DC"], [0x99, "\u2122"], [0x9A, "\u0161"], [0x9B, "\u203A"], [0x9C, "\u0153"], [0x9E, "\u017E"], [0x9F, "\u0178"]];
@@ -2956,7 +2957,7 @@ module.exports = {
                         tokenEnd.push(tag);
                 };
 
-                logall.push("Call function Tokenization (12.2.4)");
+                logall.push("\nCall function Tokenization (12.2.4)");
 
                 while (state[state.length - 1] !== null) {
                     logall.push("> Switch to " + state[state.length - 1]);
@@ -4951,7 +4952,7 @@ module.exports = {
                             break;
                     }
                 }
-                logall.push("End function Tokenization");
+                logall.push("End function Tokenization\n");
             };
 
             tokenization(stream);
@@ -4960,11 +4961,11 @@ module.exports = {
         };
 
         var streamR = preprocessing(stream);
-        logall.push("PRE-PROCESS TOKENS");
         parsing(streamR);
         labelProcess++;
         emitList = [];
         logall.push("PARSING");
+        logall = [];
         parsing(streamR);
         //console.log(emitList);
         //console.log(document);

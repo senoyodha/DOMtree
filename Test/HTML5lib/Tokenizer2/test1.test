@@ -1,0 +1,11 @@
+{"tests": [
+
+{"description":"Correct Doctype lowercase",
+"input":"<!DOCTYPE html>",
+"output":[["DOCTYPE", "html", null, null, true]]},
+
+{"description":"Correct Doctype uppercase",
+"input":"<!DOCTYPE HTML>",
+"output":[["DOCTYPE", "html", null, null, true]]}
+
+]}

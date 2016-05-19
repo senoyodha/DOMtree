@@ -1,5 +1,5 @@
 module.exports = {
-    parser: function (stream) {
+    parser: function (stream, testTokenizer) {
         var stream = stream;
 
         function documents(type) {
@@ -2738,12 +2738,18 @@ module.exports = {
             //Handling emitation of function Tokenization
             function emit(type, value) {
                 var emits;
-                if (type == "End-of-file" || type == "ParseError")
+                if (type == "End-of-file" || type == "ParseError") {
                     emits = type;
+                    logall.push("STATE: " + state[state.length - 1] + " | CURRENT: " + stream[currentInput]);
+                }
                 else if (type == "StartTag" || type == "EndTag") {
                     var emitAttr = {};
-                    for (var i in value.attribute)
-                        emitAttr[value.attribute[i].name] = value.attribute[i].value;
+                    for (var i in value.attribute) {
+                        if (emitAttr[value.attribute[i].name] != null)
+                            emit("ParseError");
+                        else
+                            emitAttr[value.attribute[i].name] = value.attribute[i].value;
+                    }
                     var ns;
                     if (value.name.indexOf(":") == -1)
                         ns = nsEl["html"];
@@ -2766,8 +2772,8 @@ module.exports = {
                         }
                     }
                     emits = [type, value.name, emitAttr, value.flag ? true : null, ns];
-                    if (value.flag)
-                        emits.push(true);
+                    if (type == "EndTag" && (value.flag || Object.keys(emitAttr).length > 0))
+                        emit("ParseError");
                 }
                 else if (type == "DOCTYPE")
                     emits = [type, value.name, value.publicId, value.systemId, value.flag == "on"];
@@ -2775,7 +2781,7 @@ module.exports = {
                 emitList.push(emits);
                 logall.push("Emit: " + JSON.stringify(emits).replace(/\,/g, ", "));
                 if (labelProcess > 0) {
-                    if (emits != "ParseError" && !ignoreTokenFlag)
+                    if (emits != "ParseError" && !ignoreTokenFlag && (!testTokenizer || testTokenizer == null))
                         treeConstructionDispatcher(emits);
                     else if (ignoreTokenFlag)
                         ignoreTokenFlag = false;
@@ -2844,14 +2850,14 @@ module.exports = {
                             while (till) {
                                 till = false;
                                 if (hex) {
-                                    if (!(/[0-9a-fA-F]/.test(stream[nextInput]))) {
+                                    if (/[0-9a-fA-F]/.test(stream[nextInput]) && stream[nextInput] != undefined) {
                                         consumeNext(false);
                                         consume += stream[currentInput];
                                         till = true;
                                     }
                                 }
                                 else {
-                                    if (!(/[0-9]/.test(stream[nextInput]))) {
+                                    if ((/[0-9]/.test(stream[nextInput]))) {
                                         consumeNext(false);
                                         consume += stream[currentInput];
                                         till = true;
@@ -4180,8 +4186,8 @@ module.exports = {
                                 else
                                     consume += stream[currentInput];
                             }
-                            if (consume.length > 1)
-                                emit("Comment", trigger + consume.slice(0, consume.length - 1).replace(/\u0000/g, "\uFFFD"));
+                            if ((trigger + consume).length > 1)
+                                emit("Comment", (trigger != null ? trigger : "") + consume.slice(0, consume.length - 1).replace(/\u0000/g, "\uFFFD"));
                             else
                                 emit("Comment", "");
                             state.push("Data state");
@@ -4208,6 +4214,7 @@ module.exports = {
                             }
                             else {
                                 emit("ParseError");
+                                consumeNext(true);
                                 state.push("Bogus comment state");
                             }
                             break;
@@ -4962,11 +4969,13 @@ module.exports = {
 
         var streamR = preprocessing(stream);
         parsing(streamR);
-        labelProcess++;
-        emitList = [];
-        logall.push("PARSING");
-        logall = [];
-        parsing(streamR);
+        if (!testTokenizer || testTokenizer == null) {
+            labelProcess++;
+            emitList = [];
+            logall.push("PARSING");
+            logall = [];
+            parsing(streamR);
+        }
         //console.log(emitList);
         //console.log(document);
         //console.log(logall);

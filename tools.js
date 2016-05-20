@@ -33,6 +33,7 @@ function tokenTest(path) {
     var files = fs.readdirSync(pathTest);
     var arfile = [[], []];
     var nar = [0, 0];
+    var arlast = [];
     console.log("!!TOKEN TEST!!")
     console.log("PATH: " + pathTest);
     for (var i in files) {
@@ -53,6 +54,7 @@ function tokenTest(path) {
         nar[0] += nars[0];
         nar[1] += nars[1];
         arfile[1][pos] = "(T: " + (nars[0] + nars[1]) + " | A: " + nars[0] + " | D: " + nars[1] + ")\n----------------------------------------------";
+        arlast.push(files[i] + "\t(Cases: " + (nars[0] + nars[1]) + ", Agree: " + nars[0] + ", Disagree: " + nars[1] + ")");
         for (var k = arfile[0].length; k < arfile[1].length; k++)
             arfile[0].push("n/a");
         for (var k = arfile[1].length; k < arfile[0].length; k++)
@@ -64,10 +66,13 @@ function tokenTest(path) {
     var arr = [];
     for (var i in arfile[0])
         arr.push(arfile[0][i] + "\t\t" + arfile[1][i]);
-    arr.unshift("Path: " + pathTest + " (T: " + (nar[0] + nar[1]) + " | A: " + nar[0] + " | " + "D: " + nar[1] + ")\n----------------------------------------------");
+    arr.unshift("Path: " + pathTest + " (T: " + (nar[0] + nar[1]) + " | A: " + nar[0] + " (" + (nar[0]*100/(nar[0] + nar[1])).toFixed(1) + "%) | " + "D: " + nar[1] + " (" + (nar[1]*100/(nar[0] + nar[1])).toFixed(1) + "%))\n----------------------------------------------\n");
+    arr[0] += arlast.join("\n") + "\n----------------------------------------------";
     var dt = (new Date()).toISOString().substr(2,17).replace("T", " ").replace(/\-/g, "").replace(/\:/g, "");
     fs.appendFileSync(pathLog + dt + ".txt", arr.join("\n"));
-    console.log("Files: " + files.length + ", Cases: " + (nar[0] + nar[1]) + ", Agree: " + nar[0] + ", Dis: " + nar[1]);
+    console.log("Files: " + files.length + ", Cases: " + (nar[0] + nar[1]) + ", Agree: " + nar[0] + " (" + (nar[0]*100/(nar[0] + nar[1])).toFixed(1) + "%), Dis: " + nar[1] + " (" + (nar[1]*100/(nar[0] + nar[1])).toFixed(1) + "%)");
+    for (var i in arlast)
+    console.log(arlast[i]);
     return (arr);
 }
 

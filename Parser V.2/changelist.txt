@@ -1,0 +1,8 @@
+tokenStart --> tokens.start
+tokenEnd --> tokens.end
+tokenComment --> tokens.comment
+tokenDOCTYPE --> tokens.doctype
+emit(type, value) --> emit(token)
+class token
+state --> state.list
+class tokendoctypes --> tokendoctype

@@ -92,29 +92,29 @@ module.exports = {
 
 //Parsing: Tokenization and Tree Construction
             var parsing = function (stream) {
-                var framesetFlag = "ok";
-                var listFormat = [];
-                var nextInput = 0;
-                var currentInput = -1;
-                var state = ["Data state"];
-                var mode = ["Initial"]; //Insertion mode
-                var stackOpen = [];
+                var framesetFlag = "ok"; //35
+                var listFormat = []; //35
+                var nextInput = 0; //458
+                var currentInput = -1; //378
+                var state = ["Data state"]; //3478
+                var mode = ["Initial"]; //35
+                var stackOpen = []; //356
                 var currentNode = function () {
                     return stackOpen[stackOpen.length - 1];
-                };
-                var stackTemplate = [];
-                var pendingCharTable = [];
+                }; //356
+                var stackTemplate = []; //5
+                var pendingCharTable = []; //5
                 var currentTemplate = function () {
                     return stackTemplate[stackTemplate.length - 1];
-                };
-                var adjustedNode = null; //Adjusted current Node
-                var headPointer = null; //Head element pointer
-                var formPointer = null; //Form element pointer
-                var returnMode = null;
-                var foster = false;
-                var reProcess = true;
-                var callBack = "";
-                var ignoreTokenFlag = false;
+                }; //3
+                var adjustedNode = null; //68
+                var headPointer = null; //35
+                var formPointer = null; //35
+                var returnMode = null; //35
+                var foster = false; //35
+                var reProcess = true; //356
+                var callBack = ""; //35
+                var ignoreTokenFlag = false; //57
                 var specialTag = ["address", "applet", "area", "article", "aside", "base", "basefont", "bgsound", "blockquote", "body",
                     "br", "button", "caption", "center", "col", "colgroup", "dd", "details", "dir", "div", "dl", "dt", "embed", "fieldset",
                     "figcaption", "figure", "footer", "form", "frame", "frameset", "h1", "h2", "h3", "h4", "h5", "h6", "head", "header",
@@ -122,9 +122,9 @@ module.exports = {
                     "menuitem", "meta", "nav", "noembed", "noframes", "noscript", "object", "ol", "p", "param", "plaintext", "pre", "script",
                     "section", "select", "source", "style", "summary", "table", "tbody", "td", "template", "textarea", "tfoot", "th",
                     "thead", "title", "tr", "track", "ul", "wbr", "and xmp; mi", "mo", "mn", "ms", "mtext", "annotation-xml", "foreignObject",
-                    "desc", "title"];
+                    "desc", "title"]; //35
                 var scopeEl = ["applet", "caption", "html", "table", "td", "th", "marquee", "object", "template", "mi", "mo", "mn", "ms",
-                    "mtext", "annotation-xml", "foreignObject", "desc", "title"];
+                    "mtext", "annotation-xml", "foreignObject", "desc", "title"]; //3
                 var nsEl = {
                     html: "http://www.w3.org/1999/xhtml",
                     mathml: "http://www.w3.org/1998/Math/MathML",
@@ -132,10 +132,12 @@ module.exports = {
                     xlink: "http://www.w3.org/1999/xlink",
                     xml: "http://www.w3.org/XML/1998/namespace",
                     xmlns: "http://www.w3.org/2000/xmlns/"
-                };
-                var nsList = ["http://www.w3.org/1999/xhtml", "http://www.w3.org/1998/Math/MathML", "http://www.w3.org/2000/svg", "http://www.w3.org/1999/xlink", "http://www.w3.org/XML/1998/namespace", "http://www.w3.org/2000/xmlns/"];
+                }; //3578
+                var nsList = ["http://www.w3.org/1999/xhtml", "http://www.w3.org/1998/Math/MathML", "http://www.w3.org/2000/svg",
+                    "http://www.w3.org/1999/xlink", "http://www.w3.org/XML/1998/namespace", "http://www.w3.org/2000/xmlns/"]; //7
                 logall.push("Call function Parsing");
 
+                // Tree algorithm
                 function switchMode(target, reprocess, returnFlag, callback) {
                     reProcess = reprocess ? reprocess : false;
                     returnMode = returnFlag ? mode[mode.length - 1] : null;
@@ -143,7 +145,6 @@ module.exports = {
                     mode.push(target);
                 }
 
-                //12.2.3.1 The insertion mode
                 function resetModeProperly(reprocess) {
                     var last = false;
                     var node = currentNode();
@@ -292,7 +293,6 @@ module.exports = {
                     return newNode;
                 }
 
-                //12.2.5.5 The rules for parsing tokens in foreign content
                 function parsingForeignContent(token) {
                     //**/
                     var flag = false;
@@ -348,25 +348,6 @@ module.exports = {
 
                 function insertHTMLElement(token) {
                     return insertForeignElement(token, token[4]);
-                }
-
-                function consumeNext(eof) {
-                    currentInput = nextInput;
-                    nextInput++;
-                    var utfCode = (currentInput < stream.length ? stream[currentInput].codePointAt(0).toString(16).toUpperCase() : "EOF");
-                    utfCode = utfCode.length > 4 ? utfCode : ("0000" + utfCode).slice(-4);
-                    if (eof)
-                        logall.push(">> Consumed " + (currentInput < stream.length ? stream[currentInput] + " (U+" + utfCode + ")" : "EOF"));
-                    else
-                        logall.push(">> Consumed " + stream[currentInput] + " (U+" + utfCode + ")");
-                }
-
-                function reconsumeCurrent() {
-                    var utfCode = (currentInput < stream.length ? stream[currentInput].codePointAt(0).toString(16).toUpperCase() : "EOF");
-                    utfCode = utfCode.length > 4 ? utfCode : ("0000" + utfCode).slice(-4);
-                    logall.push(">> Reconsume: " + (currentInput < stream.length ? stream[currentInput] + " (U+" + utfCode + ")" : "EOF"));
-                    nextInput = currentInput;
-                    currentInput--;
                 }
 
                 function insertNode(target, newNode, mode) {
@@ -826,6 +807,25 @@ module.exports = {
                     insertNode(adjustInsert.target, newNode, adjustInsert.mode);
                     stackOpen.push(newNode);
                     return newNode;
+                }
+
+                function consumeNext(eof) {
+                    currentInput = nextInput;
+                    nextInput++;
+                    var utfCode = (currentInput < stream.length ? stream[currentInput].codePointAt(0).toString(16).toUpperCase() : "EOF");
+                    utfCode = utfCode.length > 4 ? utfCode : ("0000" + utfCode).slice(-4);
+                    if (eof)
+                        logall.push(">> Consumed " + (currentInput < stream.length ? stream[currentInput] + " (U+" + utfCode + ")" : "EOF"));
+                    else
+                        logall.push(">> Consumed " + stream[currentInput] + " (U+" + utfCode + ")");
+                }
+
+                function reconsumeCurrent() {
+                    var utfCode = (currentInput < stream.length ? stream[currentInput].codePointAt(0).toString(16).toUpperCase() : "EOF");
+                    utfCode = utfCode.length > 4 ? utfCode : ("0000" + utfCode).slice(-4);
+                    logall.push(">> Reconsume: " + (currentInput < stream.length ? stream[currentInput] + " (U+" + utfCode + ")" : "EOF"));
+                    nextInput = currentInput;
+                    currentInput--;
                 }
 
                 //12.2.5 Tree construction

@@ -7,12 +7,12 @@ function documents(type) {
     this.document = this;
     this.prev = null;
     this.next = null;
-    this.readiness = "loading";
+    this.readiness = 'loading';
     this.DOMContentLoaded = function () {
         //empty
     };
     this.window = {
-        content: "", load: function (override) {
+        content: '', load: function (override) {
             //empty
         }
     };
@@ -20,7 +20,7 @@ function documents(type) {
 function nodes(type, doc, namespace) {
     this.type = type;
     this.parent = null;
-    this.namespace = namespace == null ? "http://www.w3.org/1999/xhtml" : namespace;
+    this.namespace = namespace == null ? 'http://www.w3.org/1999/xhtml' : namespace;
     this.firstChild = {parent: this};
     this.lastChild = {parent: this};
     this.prev = null;
@@ -30,31 +30,33 @@ function nodes(type, doc, namespace) {
 }
 function tokenTag(type, name) {
     this.type = type;
-    this.name = (name == null ? "" : name);
+    this.name = (name == null ? '' : name);
     this.flag = false;
     this.attribute = [];
+    this.namespace = null;
 }
 tokenTag.prototype.newAttr = function (name) {
-    this.attribute.push({name: name == null ? "" : name, value: ""});
+    this.attribute.push({name: name == null ? '' : name, value: ''});
 }
 function tokenDOCTYPE(name, flag) {
-    this.type = "DOCTYPE";
+    this.type = 'DOCTYPE';
     this.name = name;
     this.publicId = null;
     this.systemId = null;
-    this.flag = (flag == null ? "off" : flag);
+    this.flag = (flag == null ? 'off' : flag);
+    this.namespace = null;
 }
-function tokenCharCom(type, value) {
+function tokenCharCom(type, data) {
     this.type = type;
-    this.value = value;
+    this.data = data;
 }
-function tokenParEr(value) {
-    this.type = "ParseError";
-    this.value = value;
+function tokenParEr(data) {
+    this.type = 'ParseError';
+    this.data = data;
 }
-function tokenEOF(value) {
-    this.type = "End-of-file";
-    this.value = value;
+function tokenEOF(data) {
+    this.type = 'End-of-file';
+    this.data = data;
 }
 module.exports = {
     documents: documents,
@@ -63,5 +65,5 @@ module.exports = {
     tokenDOCTYPE: tokenDOCTYPE,
     tokenCharCom: tokenCharCom,
     tokenParEr: tokenParEr,
-    tokenEOF: tokenEOF
+    tokenEOF: tokenEOF,
 };

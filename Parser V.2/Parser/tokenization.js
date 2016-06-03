@@ -92,18 +92,15 @@ var stateRef = {
     character_reference_end_state: ['Character reference end state', '12.2.4.75']
 };
 
-// States definition
+// States definition and supporting algorithm
 try {
     var stateSup = {
         now: function () {
             return state.list[state.list.length - 1];
         },
-        prev: function () {
-            return state.list[state.list.length - 2];
-        },
         switch: function (newState, returnState) {
             state.list.push(newState);
-            logs.push('\t' + (returnState == null ? 'Switch' : 'Return') + ' to "' + newState + '" (' + stateRef[this.convert(newState)][1] + ')');
+            logs.push('\t' + (returnState ? 'Return' : 'Switch') + ' to "' + newState + '" (' + stateRef[this.convert(newState)][1] + ')');
         },
         isEOF: function () {
             return (currentInput >= stream.length);
@@ -119,12 +116,19 @@ try {
         convert: function (stateName) {
             return stateName.toLowerCase().replace(/\s/g, '_').replace(/-/g, '_').replace(/\(/g, '').replace(/\)/g, '');
         },
-        emitTag: function (tag) {
-            if (tag.constructor.name == "tokenTag")
-                tokens[tag.type].push(tag);
-            if (tag.constructor.name == "tokenParEr")
-                logs.push('\t\tParse error: ' + tag.value);
-            stateSup.emitTag(tag);
+        emitTag: function (token) {
+            if (token.constructor.name == "tokenParEr")
+                logs.push('\t\tParse error: ' + token.data);
+            else {
+                if (token.constructor.name == "tokenTag")
+                    tokens[token.type].push(token);
+                if (token.type == 'EndTag' && token.attribute.length > 0)
+                    this.emitTag(new cls.tokenParEr('Attribute defined in end tag token (PE114)'));
+                if (token.type == 'EndTag' && token.flag == 'on')
+                    this.emitTag(new cls.tokenParEr('Self-closing flag set in end tag token (PE115)'));
+                logs.push('\t\tEmit: ' + token.type + ' token (' + JSON.stringify(token) + ')');
+            }
+            state.emit.push(token);
         },
         consumeNext: function () {
             currentInput++;
@@ -135,18 +139,19 @@ try {
         reconsumeIn: function (newState, returnState) {
             var utfCode = (currentInput < stream.length ? stream[currentInput].codePointAt(0).toString(16).toUpperCase() : 'EOF');
             utfCode = utfCode.length > 4 ? utfCode : ('0000' + utfCode).slice(-4);
-            logs.push('\t\tReconsume ' + (currentInput < stream.length ? stream[currentInput] + ' (U+' + utfCode + ')' : 'EOF') + ' in "' + newState + '" (' + stateRef[stateSup.convert(newState)][1] + ')');
+            logs.push('\t\tReconsume ' + (currentInput < stream.length ? stream[currentInput] + ' (U+' + utfCode + ')' : 'EOF') + ' in "' + newState + '" (' + stateRef[this.convert(newState)][1] + ')');
             currentInput--;
-            state.list.push(newState, returnState);
+            this.switch(newState, returnState);
         },
         appropriateTag: function () {
             return (tokens.TAG[tokens.TAG.length - 1].name == tokens.StartTag[tokens.StartTag.length - 1].name);
         },
         checkAttr: function () {
             var tokTemp = tokens.TAG[tokens.TAG.length - 1];
-            for (var i in tokTemp.attribute)
+            for (var i = 0; i < tokTemp.attribute.length - 1; i++)
                 if (tokTemp.attribute[i].name == tokTemp.attribute[tokTemp.attribute.length - 1].name) {
                     tokTemp.attribute.pop();
+                    this.emitTag(new cls.tokenParEr('Duplicate attribute name found (PE116)'));
                     return;
                 }
         }
@@ -284,7 +289,7 @@ try {
                         tokens.TAG.push(new cls.tokenTag('EndTag'));
                         stateSup.reconsumeIn('Tag name state');
                     }
-                    else if (this.isEOF()) {
+                    else if (stateSup.isEOF()) {
                         stateSup.emitTag(new cls.tokenParEr('EOF before emit a tag (PE009)'));
                         stateSup.emitTag(new cls.tokenCharCom('Character', '\u003C')); // Less-than sign (<)
                         stateSup.emitTag(new cls.tokenCharCom('Character', '\u002F')); // Solidus (/)
@@ -311,15 +316,15 @@ try {
                     stateSup.switch('Self-closing start tag state');
                     break;
                 case '\u003E': // Greater-than sign (>)
-                    stateSup.switch('Data state');
                     stateSup.emitTag(tokens.TAG[tokens.TAG.length - 1]);
+                    stateSup.switch('Data state');
                     break;
                 case '\u0000': // NULL
                     stateSup.emitTag(new cls.tokenParEr('NULL (U+0000) character (PE011)'));
                     tokens.TAG[tokens.TAG.length - 1].name += '\uFFFD'; // Replacement character
                     break;
                 default:
-                    if (this.isEOF()) {
+                    if (stateSup.isEOF()) {
                         stateSup.emitTag(new cls.tokenParEr('EOF before emit a tag (PE012)'));
                         stateSup.reconsumeIn('Data state');
                     }
@@ -374,8 +379,8 @@ try {
                     break;
                 case '\u003E': // Greater-than sign (>)
                     if (stateSup.appropriateTag()) {
-                        stateSup.switch('Data state');
                         stateSup.emitTag(tokens.TAG[tokens.TAG.length - 1]);
+                        stateSup.switch('Data state');
                     }
                     else
                         flagAny = true;
@@ -443,8 +448,8 @@ try {
                     break;
                 case '\u003E': // Greater-than sign (>)
                     if (stateSup.appropriateTag()) {
-                        stateSup.switch('Data state');
                         stateSup.emitTag(tokens.TAG[tokens.TAG.length - 1]);
+                        stateSup.switch('Data state');
                     }
                     else
                         flagAny = true;
@@ -474,9 +479,9 @@ try {
                     stateSup.switch('Script data end tag open state');
                     break;
                 case '\u0021': // Exclamation mark (!)
-                    stateSup.switch('Script data escape start state');
                     stateSup.emitTag(new cls.tokenCharCom('Character', '\u003C')); // Less-than sign (<)
                     stateSup.emitTag(new cls.tokenCharCom('Character', '\u0021')); // Exclamation mark (!)
+                    stateSup.switch('Script data escape start state');
                     break;
                 default:
                     stateSup.emitTag(new cls.tokenCharCom('Character', '\u003C')); // Less-than sign (<)
@@ -517,8 +522,8 @@ try {
                     break;
                 case '\u003E': // Greater-than sign (>)
                     if (stateSup.appropriateTag()) {
-                        stateSup.switch('Data state');
                         stateSup.emitTag(tokens.TAG[tokens.TAG.length - 1]);
+                        stateSup.switch('Data state');
                     }
                     else
                         flagAny = true;
@@ -544,8 +549,8 @@ try {
             stateSup.consumeNext();
             switch (stream[currentInput]) {
                 case '\u002D': // Hyphen-minus (-)
-                    stateSup.switch('Script data escape start dash state');
                     stateSup.emitTag(new cls.tokenCharCom('Character', '\u002D')); // Hyphen-minus (-)
+                    stateSup.switch('Script data escape start dash state');
                     break;
                 default:
                     stateSup.reconsumeIn('Script data state');
@@ -556,8 +561,8 @@ try {
             stateSup.consumeNext();
             switch (stream[currentInput]) {
                 case '\u002D': // Hyphen-minus (-)
-                    stateSup.switch('Script data escaped dash dash state');
                     stateSup.emitTag(new cls.tokenCharCom('Character', '\u002D')); // Hyphen-minus (-)
+                    stateSup.switch('Script data escaped dash dash state');
                     break;
                 default:
                     stateSup.reconsumeIn('Script data state');
@@ -568,8 +573,8 @@ try {
             stateSup.consumeNext();
             switch (stream[currentInput]) {
                 case '\u002D': // Hyphen-minus (-)
-                    stateSup.switch('Script data escaped dash state');
                     stateSup.emitTag(new cls.tokenCharCom('Character', '\u002D')); // Hyphen-minus (-)
+                    stateSup.switch('Script data escaped dash state');
                     break;
                 case '\u003C': // Less-than sign (<)
                     stateSup.switch('Script data escaped less-than sign state');
@@ -592,16 +597,16 @@ try {
             stateSup.consumeNext();
             switch (stream[currentInput]) {
                 case '\u002D': // Hyphen-minus (-)
-                    stateSup.switch('Script data escaped dash dash state');
                     stateSup.emitTag(new cls.tokenCharCom('Character', '\u002D')); // Hyphen-minus (-)
+                    stateSup.switch('Script data escaped dash dash state');
                     break;
                 case '\u003C': // Less-than sign (<)
                     stateSup.switch('Script data escaped less-than sign state');
                     break;
                 case '\u0000': // NULL character
                     stateSup.emitTag(new cls.tokenParEr('NULL (U+0000) character (PE015)'));
-                    stateSup.switch('Script data escaped state');
                     stateSup.emitTag(new cls.tokenCharCom('Character', '\uFFFD')); // Replacement character
+                    stateSup.switch('Script data escaped state');
                     break;
                 default:
                     if (stateSup.isEOF()) {
@@ -609,8 +614,8 @@ try {
                         stateSup.reconsumeIn('Data state');
                     }
                     else {
-                        stateSup.switch('Script data escaped state');
                         stateSup.emitTag(new cls.tokenCharCom('Character', stream[currentInput]));
+                        stateSup.switch('Script data escaped state');
                     }
                     break;
             }
@@ -625,13 +630,13 @@ try {
                     stateSup.switch('Script data escaped less-than sign state');
                     break;
                 case '\u003E': // Greater-than sign (>)
-                    stateSup.switch('Script data state');
                     stateSup.emitTag(new cls.tokenCharCom('Character', '\u003E')); // Greater-than sign (>)
+                    stateSup.switch('Script data state');
                     break;
                 case '\u0000': // NULL character
                     stateSup.emitTag(new cls.tokenParEr('NULL (U+0000) character (PE017)'));
-                    stateSup.switch('Script data escaped state');
                     stateSup.emitTag(new cls.tokenCharCom('Character', '\uFFFD')); // Replacement character
+                    stateSup.switch('Script data escaped state');
                     break;
                 default:
                     if (stateSup.isEOF()) {
@@ -639,8 +644,8 @@ try {
                         stateSup.reconsumeIn('Data state');
                     }
                     else {
-                        stateSup.switch('Script data escaped state');
                         stateSup.emitTag(new cls.tokenCharCom('Character', stream[currentInput]));
+                        stateSup.switch('Script data escaped state');
                     }
                     break;
             }
@@ -698,8 +703,8 @@ try {
                     break;
                 case '\u003E': // Greater-than sign (>)
                     if (stateSup.appropriateTag()) {
-                        stateSup.switch('Data state');
                         stateSup.emitTag(tokens.TAG[tokens.TAG.length - 1]);
+                        stateSup.switch('Data state');
                     }
                     else
                         flagAny = true;
@@ -730,11 +735,11 @@ try {
                 case '\u0020': // Space ( )
                 case '\u002F': // Solidus (/)
                 case '\u003E': // Greater-than sign (>)
+                    stateSup.emitTag(new cls.tokenCharCom('Character', stream[currentInput]));
                     if (tempBuffer == 'script')
                         stateSup.switch('Script data double escaped state');
                     else
                         stateSup.switch('Script data escaped state');
-                    stateSup.emitTag(new cls.tokenCharCom('Character', stream[currentInput]));
                     break;
                 default:
                     if (/[A-Za-z]/g.test(stream[currentInput])) {
@@ -750,13 +755,12 @@ try {
             stateSup.consumeNext();
             switch (stream[currentInput]) {
                 case '\u002D': // Hyphen-minus (-)
-                    stateSup.switch('Script data double escaped dash state');
                     stateSup.emitTag(new cls.tokenCharCom('Character', '\u002D')); // Hyphen-minus (-)
+                    stateSup.switch('Script data double escaped dash state');
                     break;
                 case '\u003C': // Less-than sign (<)
-                    stateSup.switch('Script data double escaped less-than sign state');
                     stateSup.emitTag(new cls.tokenCharCom('Character', '\u003C')); // Less-than sign (<)
-
+                    stateSup.switch('Script data double escaped less-than sign state');
                     break;
                 case '\u0000': // NULL character
                     stateSup.emitTag(new cls.tokenParEr('NULL (U+0000) character (PE019)'));
@@ -776,17 +780,17 @@ try {
             stateSup.consumeNext();
             switch (stream[currentInput]) {
                 case '\u002D': // Hyphen-minus (-)
-                    stateSup.switch('Script data double escaped dash dash state');
                     stateSup.emitTag(new cls.tokenCharCom('Character', '\u002D')); // Hyphen-minus (-)
+                    stateSup.switch('Script data double escaped dash dash state');
                     break;
                 case '\u003C': // Less-than sign (<)
-                    stateSup.switch('Script data double escaped less-than sign state');
                     stateSup.emitTag(new cls.tokenCharCom('Character', '\u003C')); // Less-than sign (<)
+                    stateSup.switch('Script data double escaped less-than sign state');
                     break;
                 case '\u0000': // NULL character
                     stateSup.emitTag(new cls.tokenParEr('NULL (U+0000) character (PE021)'));
-                    stateSup.switch('Script data double escaped state');
                     stateSup.emitTag(new cls.tokenCharCom('Character', '\uFFFD')); // Replacement character
+                    stateSup.switch('Script data double escaped state');
                     break;
                 default:
                     if (stateSup.isEOF()) {
@@ -794,8 +798,8 @@ try {
                         stateSup.reconsumeIn('Data state');
                     }
                     else {
-                        stateSup.switch('Script data double escaped state');
                         stateSup.emitTag(new cls.tokenCharCom('Character', stream[currentInput]));
+                        stateSup.switch('Script data double escaped state');
                     }
                     break;
             }
@@ -807,17 +811,17 @@ try {
                     stateSup.emitTag(new cls.tokenCharCom('Character', '\u002D')); // Hyphen-minus (-)
                     break;
                 case '\u003C': // Less-than sign (<)
-                    stateSup.switch('Script data double escaped less-than sign state');
                     stateSup.emitTag(new cls.tokenCharCom('Character', '\u003C')); // Less-than sign (<)
+                    stateSup.switch('Script data double escaped less-than sign state');
                     break;
                 case '\u003E': // Greater-than sign (>)
-                    stateSup.switch('Script data state');
                     stateSup.emitTag(new cls.tokenCharCom('Character', '\u003E')); // Greater-than sign (>)
+                    stateSup.switch('Script data state');
                     break;
                 case '\u0000': // NULL character
                     stateSup.emitTag(new cls.tokenParEr('NULL (U+0000) character (PE023)'));
-                    stateSup.switch('Script data double escaped state');
                     stateSup.emitTag(new cls.tokenCharCom('Character', '\uFFFD')); // Replacement character
+                    stateSup.switch('Script data double escaped state');
                     break;
                 default:
                     if (stateSup.isEOF()) {
@@ -825,8 +829,8 @@ try {
                         stateSup.reconsumeIn('Data state');
                     }
                     else {
-                        stateSup.switch('Script data double escaped state');
                         stateSup.emitTag(new cls.tokenCharCom('Character', stream[currentInput]));
+                        stateSup.switch('Script data double escaped state');
                     }
                     break;
             }
@@ -852,11 +856,11 @@ try {
                 case '\u0020': // Space ( )
                 case '\u002F': // Solidus (/)
                 case '\u003E': // Greater-than sign (>)
+                    stateSup.emitTag(new cls.tokenCharCom('Character', stream[currentInput]));
                     if (tempBuffer == 'script')
                         stateSup.switch('Script data escaped state');
                     else
                         stateSup.switch('Script data double escaped state');
-                    stateSup.emitTag(new cls.tokenCharCom('Character', stream[currentInput]));
                     break;
                 default:
                     if (/[A-Za-z]/g.test(stream[currentInput])) {
@@ -943,9 +947,9 @@ try {
                     stateSup.switch('Before attribute value state');
                     break;
                 case '\u003E': // Greater-than sign (>)
-                    stateSup.switch('Data state');
                     stateSup.checkAttr();
                     stateSup.emitTag(tokens.TAG[tokens.TAG.length - 1]);
+                    stateSup.switch('Data state');
                     break;
                 default:
                     if (stateSup.isEOF()) {
@@ -1042,9 +1046,9 @@ try {
                     stateSup.switchRef();
                     break;
                 case '\u003E': // Greater-than sign (>)
-                    stateSup.switch('Data state');
                     stateSup.checkAttr();
                     stateSup.emitTag(tokens.TAG[tokens.TAG.length - 1]);
+                    stateSup.switch('Data state');
                     break;
                 case '\u0000': // NULL
                     stateSup.emitTag(new cls.tokenParEr('NULL (U+0000) character (PE034)'));
@@ -1081,9 +1085,9 @@ try {
                     stateSup.switch('Self-closing start tag state');
                     break;
                 case '\u003E': // Greater-than sign (>)
-                    stateSup.switch('Data state');
                     stateSup.checkAttr();
                     stateSup.emitTag(tokens.TAG[tokens.TAG.length - 1]);
+                    stateSup.switch('Data state');
                     break;
                 default:
                     if (stateSup.isEOF()) {
@@ -1102,9 +1106,9 @@ try {
             switch (stream[currentInput]) {
                 case '\u003E': // Greater-than sign (>)
                     tokens.TAG[tokens.TAG.length - 1].flag = true;
-                    stateSup.switch('Data state');
                     stateSup.checkAttr();
                     stateSup.emitTag(tokens.TAG[tokens.TAG.length - 1]);
+                    stateSup.switch('Data state');
                     break;
                 default:
                     if (stateSup.isEOF()) {
@@ -1122,8 +1126,8 @@ try {
             stateSup.consumeNext();
             switch (stream[currentInput]) {
                 case '\u003E': // Greater-than sign (>)
-                    stateSup.switch('Data state');
                     stateSup.emitTag(tokens.Comment[tokens.Comment.length - 1]);
+                    stateSup.switch('Data state');
                     break;
                 case '\u0000': // NULL
                     tokens.Comment[tokens.Comment.length - 1] += '\uFFFD'; // Replacement character
@@ -1174,8 +1178,8 @@ try {
                     break;
                 case '\u003E': // Greater-than sign (>)
                     stateSup.emitTag(new cls.tokenParEr('Close the declaration before emit a comment tag (PE043)'));
-                    stateSup.switch('Data state');
                     stateSup.emitTag(tokens.Comment[tokens.Comment.length - 1]);
+                    stateSup.switch('Data state');
                     break;
                 default:
                     if (stateSup.isEOF()) {
@@ -1203,8 +1207,8 @@ try {
                     break;
                 case '\u003E': // Greater-than sign (>)
                     stateSup.emitTag(new cls.tokenParEr('Close the declaration before emit a comment tag (PE046)'));
-                    stateSup.switch('Data state');
                     stateSup.emitTag(tokens.Comment[tokens.Comment.length - 1]);
+                    stateSup.switch('Data state');
                     break;
                 default:
                     if (stateSup.isEOF()) {
@@ -1269,8 +1273,8 @@ try {
             stateSup.consumeNext();
             switch (stream[currentInput]) {
                 case '\u003E': // Greater-than (>)
-                    stateSup.switch('Data state');
                     stateSup.emitTag(tokens.Comment[tokens.Comment.length - 1]);
+                    stateSup.switch('Data state');
                     break;
                 case '\u0000': // NULL
                     stateSup.emitTag(new cls.tokenParEr('NULL (U+0000) character (PE052)'));
@@ -1307,8 +1311,8 @@ try {
                     stateSup.switch('Comment end dash state');
                     break;
                 case '\u003E': // Greater-than (>)
-                    stateSup.switch('Data state');
                     stateSup.emitTag(tokens.Comment[tokens.Comment.length - 1]);
+                    stateSup.switch('Data state');
                     break;
                 case '\u0000': // NULL
                     stateSup.emitTag(new cls.tokenParEr('NULL (U+0000) character (PE057)'));
@@ -1367,8 +1371,8 @@ try {
                 case '\u003E': // Greater-than sign (>)
                     stateSup.emitTag(new cls.tokenParEr('Close the DOCTYPE token before it is completed (PE062)'));
                     tokens.DOCTYPE.push(new cls.tokenDOCTYPE(null, 'on')); // Replacement character
-                    stateSup.switch('Data state');
                     stateSup.emitTag(tokens.DOCTYPE[tokens.DOCTYPE.length - 1]);
+                    stateSup.switch('Data state');
                     break;
                 default:
                     if (stateSup.isEOF()) {
@@ -1394,8 +1398,8 @@ try {
                     stateSup.switch('After DOCTYPE name state');
                     break;
                 case '\u003E': // Greater-than sign (>)
-                    stateSup.switch('Data state');
                     stateSup.emitTag(tokens.DOCTYPE[tokens.DOCTYPE.length - 1]);
+                    stateSup.switch('Data state');
                     break;
                 case '\u0000': // NULL
                     stateSup.emitTag(new cls.tokenParEr('NULL (U+0000) character (PE064)'));
@@ -1422,8 +1426,8 @@ try {
                 case '\u0020': // Space ( )
                     break;
                 case '\u003E': // Greater-than sign (>)
-                    stateSup.switch('Data state');
                     stateSup.emitTag(tokens.DOCTYPE[tokens.DOCTYPE.length - 1]);
+                    stateSup.switch('Data state');
                     break;
                 default:
                     if (stateSup.isEOF()) {
@@ -1472,8 +1476,8 @@ try {
                 case '\u003E': // Greater-than sign (>)
                     stateSup.emitTag(new cls.tokenParEr('Close the tag before emit a DOCTYPE token (PE070)'));
                     tokens.DOCTYPE[tokens.DOCTYPE.length - 1].flag = 'on';
-                    stateSup.switch('Data state');
                     stateSup.emitTag(tokens.DOCTYPE[tokens.DOCTYPE.length - 1]);
+                    stateSup.switch('Data state');
                     break;
                 default:
                     if (stateSup.isEOF()) {
@@ -1509,8 +1513,8 @@ try {
                 case '\u003E': // Greater-than sign (>)
                     stateSup.emitTag(new cls.tokenParEr('Close the tag before emit a DOCTYPE token (PE073)'));
                     tokens.DOCTYPE[tokens.DOCTYPE.length - 1].flag = 'on';
-                    stateSup.switch('Data state');
                     stateSup.emitTag(tokens.DOCTYPE[tokens.DOCTYPE.length - 1]);
+                    stateSup.switch('Data state');
                     break;
                 default:
                     if (stateSup.isEOF()) {
@@ -1540,8 +1544,8 @@ try {
                 case '\u003E': // Greater-than sign (>)
                     stateSup.emitTag(new cls.tokenParEr('Close the tag before emit a DOCTYPE token (PE077)'));
                     tokens.DOCTYPE[tokens.DOCTYPE.length - 1].flag = 'on';
-                    stateSup.switch('Data state');
                     stateSup.emitTag(tokens.DOCTYPE[tokens.DOCTYPE.length - 1]);
+                    stateSup.switch('Data state');
                     break;
                 default:
                     if (stateSup.isEOF()) {
@@ -1568,8 +1572,8 @@ try {
                 case '\u003E': // Greater-than sign (>)
                     stateSup.emitTag(new cls.tokenParEr('Close the tag before emit a DOCTYPE token (PE080)'));
                     tokens.DOCTYPE[tokens.DOCTYPE.length - 1].flag = 'on';
-                    stateSup.switch('Data state');
                     stateSup.emitTag(tokens.DOCTYPE[tokens.DOCTYPE.length - 1]);
+                    stateSup.switch('Data state');
                     break;
                 default:
                     if (stateSup.isEOF()) {
@@ -1593,8 +1597,8 @@ try {
                     stateSup.switch('Between DOCTYPE public and system identifiers state');
                     break;
                 case '\u003E': // Greater-than sign (>)
-                    stateSup.switch('Data state');
                     stateSup.emitTag(tokens.DOCTYPE[tokens.DOCTYPE.length - 1]);
+                    stateSup.switch('Data state');
                     break;
                 case '\u0022': // Quotation mark (")
                     stateSup.emitTag(new cls.tokenParEr('Quotation mark (") as DOCTYPE SYSTEM value without space (PE082)'));
@@ -1630,8 +1634,8 @@ try {
                 case '\u0020': // Space ( )
                     break;
                 case '\u003E': // Greater-than sign (>)
-                    stateSup.switch('Data state');
                     stateSup.emitTag(tokens.DOCTYPE[tokens.DOCTYPE.length - 1]);
+                    stateSup.switch('Data state');
                     break;
                 case '\u0022': // Quotation mark (")
                     tokens.DOCTYPE[tokens.DOCTYPE.length - 1].systemId = '';
@@ -1678,8 +1682,8 @@ try {
                 case '\u003E': // Greater-than sign (>)
                     stateSup.emitTag(new cls.tokenParEr('Close the tag before emit a DOCTYPE token (PE090)'));
                     tokens.DOCTYPE[tokens.DOCTYPE.length - 1].flag = 'on';
-                    stateSup.switch('Data state');
                     stateSup.emitTag(tokens.DOCTYPE[tokens.DOCTYPE.length - 1]);
+                    stateSup.switch('Data state');
                     break;
                 default:
                     if (stateSup.isEOF()) {
@@ -1715,8 +1719,8 @@ try {
                 case '\u003E': // Greater-than sign (>)
                     stateSup.emitTag(new cls.tokenParEr('Close the tag before emit a DOCTYPE token (PE093)'));
                     tokens.DOCTYPE[tokens.DOCTYPE.length - 1].flag = 'on';
-                    stateSup.switch('Data state');
                     stateSup.emitTag(tokens.DOCTYPE[tokens.DOCTYPE.length - 1]);
+                    stateSup.switch('Data state');
                     break;
                 default:
                     if (stateSup.isEOF()) {
@@ -1746,8 +1750,8 @@ try {
                 case '\u003E': // Greater-than sign (>)
                     stateSup.emitTag(new cls.tokenParEr('Close the tag before emit a DOCTYPE token (PE097)'));
                     tokens.DOCTYPE[tokens.DOCTYPE.length - 1].flag = 'on';
-                    stateSup.switch('Data state');
                     stateSup.emitTag(tokens.DOCTYPE[tokens.DOCTYPE.length - 1]);
+                    stateSup.switch('Data state');
                     break;
                 default:
                     if (stateSup.isEOF()) {
@@ -1774,8 +1778,8 @@ try {
                 case '\u003E': // Greater-than sign (>)
                     stateSup.emitTag(new cls.tokenParEr('Close the tag before emit a DOCTYPE token (PE100)'));
                     tokens.DOCTYPE[tokens.DOCTYPE.length - 1].flag = 'on';
-                    stateSup.switch('Data state');
                     stateSup.emitTag(tokens.DOCTYPE[tokens.DOCTYPE.length - 1]);
+                    stateSup.switch('Data state');
                     break;
                 default:
                     if (stateSup.isEOF()) {
@@ -1798,8 +1802,8 @@ try {
                 case '\u0020': // Space ( )
                     break;
                 case '\u003E': // Greater-than sign (>)
-                    stateSup.switch('Data state');
                     stateSup.emitTag(tokens.DOCTYPE[tokens.DOCTYPE.length - 1]);
+                    stateSup.switch('Data state');
                     break;
                 default:
                     if (stateSup.isEOF()) {
@@ -1819,8 +1823,8 @@ try {
             stateSup.consumeNext();
             switch (stream[currentInput]) {
                 case '\u003E': // Greater-than sign (>)
-                    stateSup.switch('Data state');
                     stateSup.emitTag(tokens.DOCTYPE[tokens.DOCTYPE.length - 1]);
+                    stateSup.switch('Data state');
                     break;
                 default:
                     if (stateSup.isEOF()) {
@@ -2066,7 +2070,7 @@ try {
             }
             stateSup.returnRef();
         }
-    }
+    };
 }
 catch (err) {
     console.log(err.stack);
@@ -2078,17 +2082,19 @@ function tokenization(streamIn, currentInputIn, startState, adjustedNodeIn) {
     try {
         // Start the function
         logs.push('Call function TOKENIZATION (12.2.4) (tokenization.js)');
-
         // Initialising state
-        stream = (streamIn == null ? -1 : '');
+        stream = (streamIn == null ? '' : streamIn);
         currentInput = (currentInputIn == null ? -1 : currentInputIn);
         state.list.push(startState == null ? defaultInitial : startState);
         adjustedNode = adjustedNodeIn;
-        logs.push('\tEnter "' + stateSup.now() + '"' + (startState == null ? ' (initialisation)' : ''));
-
+        logs.push('\tInput stream: ' + stream);
+        logs.push('\tCurrent input position: ' + currentInputIn + ' --> ' + currentInput + ' (' + stream[currentInput] + ')');
+        logs.push('\tStarting state: ' + adjustedNodeIn + ' --> ' + stateSup.now());
+        logs.push('\tAdjusted node: ' + adjustedNodeIn + ' --> ' + adjustedNode);
+        logs.push('\tStart tokenizing the stream. Enter "' + stateSup.now() + '" ' + (startState == null ? '(12.2.4.1) (initialisation)' :
+            '(' + stateRef[stateSup.convert(startState)][1] + ') (continuation)'));
         // Main process
         while (state.emit.length == 0) {
-            logs.push('\tSwitch to and enter "' + stateSup.now() + '"');
             stateDef[stateSup.convert(stateSup.now())]();
         }
 
@@ -2097,6 +2103,12 @@ function tokenization(streamIn, currentInputIn, startState, adjustedNodeIn) {
         return ({state: state, logs: logs, currentInput: currentInput});
     }
     catch (err) {
-        return ({state: stateSup, logs: logs, currentInput: currentInput, err: err});
+        return ({state: state, logs: logs, currentInput: currentInput, err: err});
     }
+}
+
+module.exports = {
+    stateDef: stateDef,
+    stateSup: stateSup,
+    tokenization: tokenization
 }

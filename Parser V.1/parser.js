@@ -443,8 +443,7 @@ module.exports = {
                                 return {target: stackOpen[0], mode: "last"};
                             if (stackOpen[lastTable].parent != null)
                                 return {target: stackOpen[lastTable], mode: "before"};
-                            var prevElement = stackOpen[lastTable - 1];
-                            return {target: prevElement, mode: "last"};
+                            return {target: stackOpen[lastTable - 1], mode: "last"};
                         }
                         else
                             return {target: target, mode: "last"};

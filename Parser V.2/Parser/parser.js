@@ -2,7 +2,6 @@
 function parsing(stream, testTokenizer) {
     try {
         // Import modules
-        var algo = require('./algorithm');
         var cls = require('./class');
         var prepro = require('./preprocessing');
         var sprt = require('./support');
@@ -12,7 +11,6 @@ function parsing(stream, testTokenizer) {
         // Variable Declaration
         var logs = [];
         var logsFirst = [];
-        var emitList = [];
         var tokenList = [];
         var labelProcess = 0;
         var scriptFlag = false;
@@ -25,15 +23,15 @@ function parsing(stream, testTokenizer) {
             // Variable declaration
             var framesetFlag = "ok";
             var listFormat = [];
-            var nextInput = 0;
-            var currentInput = -1;
-            var state = ["Data state"];
-            var mode = ["Initial"]; //Insertion mode
+            var currentInput = 0;
+            var state = {list: [], emit: []};
+            var mode = []; //Insertion mode
             var stackOpen = [];
             var stackTemplate = [];
             var pendingCharTable = [];
             var adjustedNode = null;
             var headPointer = null;
+            var nextInput = null;
             var formPointer = null;
             var returnMode = null;
             var foster = false;
@@ -67,7 +65,16 @@ function parsing(stream, testTokenizer) {
 
 
             // Parsing cycle
-
+            while (state.emit[state.emit.length - 1].type != 'End-of-file') {
+                var resTkn = tknz.tokenization(stream, currentInput, state.length == 0 ? null : state[state.length - 1], adjustedNode);
+                // tree part
+                currentInput = resTkn.currentInput;
+                if (state.list.length == 0) // Initialisation
+                    state.list = state.list.concat(resTkn.state.list);
+                else // Continuation
+                    state.list = state.list.concat(resTkn.state.list.slice(1));
+                state.emit = state.emit.concat(resTkn.state.emit);
+            }
 
         }
 
@@ -76,18 +83,18 @@ function parsing(stream, testTokenizer) {
         stream = resPre.stream;
 
         // First parsing process (tokenization only)
-        logs.push('--FIRST PARSING PROCESS--');
+        logs.push('--PARSING PROCESS--');
         parsingProcess(stream);
 
-        // Second parsing process (tokenization + tree construction)
-        if (!testTokenizer) {
-            labelProcess++;
-            emitList = [];
-            logsFirst = logs;
-            logs = [];
-            logs.push('--SECOND PARSING PROCESS--');
-            parsingProcess(stream);
-        }
+        // // Second parsing process (tokenization + tree construction)
+        // if (!testTokenizer) {
+        //     labelProcess++;
+        //     emitList = [];
+        //     logsFirst = logs;
+        //     logs = [];
+        //     logs.push('--SECOND PARSING PROCESS--');
+        //     parsingProcess(stream);
+        // }
     }
     catch (err) {
         return ({token: emitList, doc: document, logs: logsFirst.concat(logs), err: err});

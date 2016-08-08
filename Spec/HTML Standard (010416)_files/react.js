@@ -17934,7 +17934,7 @@
             var SUBSEPARATOR = ':';
 
             /**
-             * TODO: Test that a single child and an array with one item have the same key
+             * TODO: TestLib that a single child and an array with one item have the same key
              * pattern.
              */
 
@@ -19647,7 +19647,7 @@
                     return false;
                 }
 
-                // Test for A's keys different from B.
+                // TestLib for A's keys different from B.
                 for (var i = 0; i < keysA.length; i++) {
                     if (!hasOwnProperty.call(objB, keysA[i]) || !is(objA[keysA[i]], objB[keysA[i]])) {
                         return false;

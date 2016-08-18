@@ -136,9 +136,12 @@ function DOMWrapper(dom, file, decode) {
                     }
                     dom[i].attributes = fixForeignAttr(dom[i]);
                     s += '|' + '  '.repeat(dom[i].level + dom[i].template) + ' <' + prefix + dom[i].nodeName + '>\n';
-                    if (dom[i].attributes != null && Object.keys(dom[i].attributes).length > 0)
-                        for (var j in dom[i].attributes)
-                            s += '|' + '  '.repeat(dom[i].level + dom[i].template + 1) + ' ' + j + '="' + dom[i].attributes[j].value + '"\n';
+                    if (dom[i].attributes != null && Object.keys(dom[i].attributes).length > 0) {
+                        var attra = Object.keys(dom[i].attributes);
+                        attra.sort();
+                        for (var j in attra)
+                            s += '|' + '  '.repeat(dom[i].level + dom[i].template + 1) + ' ' + attra[j] + '="' + dom[i].attributes[attra[j]].value + '"\n';
+                    }
                     if (dom[i].nodeName == 'template')
                         s += '|' + '  '.repeat(dom[i].level + dom[i].template + 1) + ' content\n';
                     break;

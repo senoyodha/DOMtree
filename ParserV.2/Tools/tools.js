@@ -82,9 +82,9 @@ function tokenTest(path, showLog, falseOnly) {
             add['lastStartTag'] = (test.tests[j].lastStartTag != null ? test.tests[j].lastStartTag : null);
             if (test.tests[j].doubleEscaped) {
                 test.tests[j].input = doubleEscapeAdapter(test.tests[j].input);
-                for (var i in test.tests[j].output)
-                    if (['Character', 'Comment'].indexOf(test.tests[j].output[i][0]) != -1)
-                        test.tests[j].output[i][1] = doubleEscapeAdapter(test.tests[j].output[i][1]);
+                for (var k in test.tests[j].output)
+                    if (['Character', 'Comment'].indexOf(test.tests[j].output[k][0]) != -1)
+                        test.tests[j].output[k][1] = doubleEscapeAdapter(test.tests[j].output[k][1]);
             }
             var res = parse.parsing(test.tests[j].input, true, add);
             var output = tokenAdapter(res.state.emit);

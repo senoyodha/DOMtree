@@ -1,0 +1,11 @@
+#document
+| <html>
+|   <head>
+|   <body>
+|     <form>
+|       <hr>
+|       <label>
+|         "Berikut merupakan indeks yang bisa dicari. Ketikkan kata kunci pencarian: "
+|         <input>
+|           name="isindex"
+|       <hr>

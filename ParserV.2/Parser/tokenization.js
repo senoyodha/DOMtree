@@ -87,9 +87,9 @@ var stateRef = {
     cdata_section_end_state: ['CDATA section end state', '12.2.4.71'],
     character_reference_state: ['Character reference state', '12.2.4.72'],
     numeric_character_reference_state: ['Numeric character reference state', '12.2.4.73'],
-    hexademical_character_reference_start_state: ['Hexademical character reference start state', '12.2.4.74'],
+    hexadecimal_character_reference_start_state: ['Hexadecimal character reference start state', '12.2.4.74'],
     decimal_character_reference_start_state: ['Decimal character reference start state', '12.2.4.75'],
-    hexademical_character_reference_state: ['Hexademical character reference state', '12.2.4.76'],
+    hexadecimal_character_reference_state: ['Hexadecimal character reference state', '12.2.4.76'],
     decimal_character_reference_state: ['Decimal character reference state', '12.2.4.77'],
     numeric_character_reference_end_state: ['Numeric character reference end state', '12.2.4.78'],
     character_reference_end_state: ['Character reference end state', '12.2.4.79']
@@ -1308,7 +1308,7 @@ try {
                     stateSup.switch('Comment less-than sign bang dash dash state');
                     break;
                 default:
-                    stateSup.reconsumeIn('Comment state');
+                    stateSup.reconsumeIn('Comment end dash state');
                     break;
             }
         },

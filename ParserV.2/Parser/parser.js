@@ -79,7 +79,7 @@ function parsing(stream, testToken, additional) {
                     state.list = state.list.concat(resTkn.state.list.slice(1));
                 state.emit = state.emit.concat(resTkn.state.emit);
                 logs = logs.concat(resTkn.logs);
-                console.log(resTkn.state.emit);
+                // console.log(resTkn.state.emit);
                 if (!testToken) {
                     logs.push('---------------------');
                     if (modeList.ignoreTokenFlag) {

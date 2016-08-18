@@ -1,0 +1,11 @@
+#document
+| <html>
+|   <head>
+|   <body>
+|     <select>
+|     <select>
+|       _moz-type="-mozilla-keygen"
+|       <option>
+|         "2048 (Tingkat Tinggi)"
+|       <option>
+|         "1024 (Tingkat Menengah)"

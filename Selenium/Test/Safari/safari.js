@@ -1,6 +1,13 @@
 var t = process.hrtime();
 var set = {
-    B: {
+    BNS: {
+        pathIn: '../../../HTMLCompare/TestSuite/Both/',
+        pathOut: '../../../HTMLCompare/DOM/Both/Safari/',
+        pathCompare: '../../../HTMLCompare/DOM/Both/Original/',
+        mode: 'Out_B',
+        scriptOn: false
+    },
+    BS: {
         pathIn: '../../../HTMLCompare/TestSuite/Both/',
         pathOut: '../../../HTMLCompare/DOM/Both/Safari/',
         pathCompare: '../../../HTMLCompare/DOM/Both/Original/',
@@ -22,7 +29,7 @@ var set = {
         scriptOn: true
     }
 };
-var mode = 'B';
+var mode = 'S';
 
 if (!set[mode].scriptOn)
     console.log('Scripting cannot be turned off on Safari. Program is terminated.');
@@ -37,7 +44,7 @@ else {
     var files = fs.readdirSync(set[mode].pathIn);
     var doms = [];
     var pathTest = tools.convertNameURL(set[mode].pathIn, __dirname, 2, 'examples/');
-    var start = 484;
+    var start = 0;
     var stop = 0;
     var log = '';
 
@@ -81,7 +88,7 @@ else {
         var rt = 'Running time: ' + (t[0] + (t[1] / 1000000000)) + ' sec';
         console.log('\n' + rt);
         log = rt + '\n\n' + log + '\n\n' + rt;
-        fs.writeFileSync(pathLog + 'SafariVsHTML5lib_' + set[mode].mode + '_' + (new Date()).toISOString().substr(2, 17).replace("T", " ").replace(/\-/g, "").replace(/\:/g, "") + '.txt', log);
+        fs.writeFileSync(pathLog + 'SafariVsHTML5lib_' + set[mode].mode + (mode[0] == 'B' ? mode.slice(1) : '') + '_' + (start != 0 || stop != 0 ? (start + 1) + 'to' + (doms.length + start) + '_' : '') + (new Date()).toISOString().substr(2, 17).replace("T", " ").replace(/\-/g, "").replace(/\:/g, "") + '.txt', log);
         driver.quit();
     });
 }

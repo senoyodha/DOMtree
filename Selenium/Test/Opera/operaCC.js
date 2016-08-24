@@ -11,7 +11,7 @@ function write(err) {
         var rt = 'Running time: ' + (t[0] + (t[1] / 1000000000)) + ' sec';
         console.log('\n' + rt);
         log = rt + '\n\n' + log + '\n\n' + rt;
-        fs.writeFileSync(pathLog + 'ChromeVsCC_' + set[mode].mode + (mode[0] == 'B' ? mode.slice(1) : '') + '_' + (start + 1) + 'to' + (doms.length + start) + '_' + curdate + '.txt', log);
+        fs.writeFileSync(pathLog + 'OperaVsCC_' + set[mode].mode + (mode[0] == 'B' ? mode.slice(1) : '') + '_' + (start + 1) + 'to' + (doms.length + start) + '_' + curdate + '.txt', log);
         console.log('\nEND: ' + files[(start + doms.length - 1)]);
     }
 }
@@ -19,13 +19,13 @@ var t = process.hrtime();
 var set = {
     NS: {
         pathIn: '../../../HTMLCompare/TestSuite/CommonCrawl/NoScript/',
-        pathOut: '../../../HTMLCompare/DOM/CommonCrawl/NoScript/Chrome/',
+        pathOut: '../../../HTMLCompare/DOM/CommonCrawl/NoScript/Opera/',
         mode: 'Out_NS',
         scriptOn: false
     },
     S: {
         pathIn: '../../../HTMLCompare/TestSuite/CommonCrawl/Scripted/',
-        pathOut: '../../../HTMLCompare/DOM/CommonCrawl/Scripted/Chrome/',
+        pathOut: '../../../HTMLCompare/DOM/CommonCrawl/Scripted/Opera/',
         mode: 'Out_S',
         scriptOn: true
     }
@@ -38,7 +38,7 @@ var fs = require('fs');
 var tools = require('./../tools');
 var comparator = require('../../../HTMLCompare/JS/comparator');
 var webdriver = require('selenium-webdriver'), By = webdriver.By, Key = webdriver.Key;
-var driver = new webdriver.Builder().withCapabilities(webdriver.Capabilities.chrome()).build();
+var driver = new webdriver.Builder().withCapabilities(webdriver.Capabilities.opera()).build();
 var script = fs.readFileSync('./domscript.js', 'utf8');
 var files = fs.readdirSync(set[mode].pathIn);
 var doms = [];
@@ -55,7 +55,8 @@ if (start > stop && stop != 0) {
     stop = temp;
 }
 var limit = stop > 0 ? stop : files.length;
-driver.get('chrome://settings/content');
+driver.get('about:config');
+driver.findElement(By.id('search-field')).sendKeys('javascript');
 driver.findElement(By.tagName('body')).sendKeys(Key.CONTROL + 't');
 driver.getAllWindowHandles().then(function (tabs) {
     driver.switchTo().window(tabs[1]);
@@ -65,12 +66,11 @@ driver.getAllWindowHandles().then(function (tabs) {
     }, function (err) {
     });
     driver.switchTo().window(tabs[0]);
-    driver.switchTo().frame(driver.findElement(By.name('settings')));
     driver.findElements(By.name('javascript')).then(function (el) {
         el[set[mode].scriptOn ? 0 : 1].click();
     });
     driver.switchTo().window(tabs[1]);
-    log += tools.logDouble('DOM extraction. Test file: ' + (limit - start) + '. Browser: Chrome. Test mode: ' + set[mode].mode);
+    log += tools.logDouble('DOM extraction. Test file: ' + (limit - start) + '. Browser: Opera. Test mode: ' + set[mode].mode);
     if (!set[mode].scriptOn)
         for (var i = 0; i < 10; i++) {
             driver.navigate().refresh();

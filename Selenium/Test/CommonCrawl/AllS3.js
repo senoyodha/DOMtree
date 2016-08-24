@@ -94,6 +94,8 @@ function abc(start, stop) {
 // console.log('Processing ' + files[cnt]);
         console.log('Starts from: ' + files[cnt]);
         browser[initial].driver.wait(function () {
+            while (arr.indexOf(cnt + 1) == -1 && cnt < limit)
+                cnt++;
             if (browser[bcnt].test) {
                 browser[bcnt].driver.navigate().to(browser[bcnt].pathTest + files[cnt]).then(function () {
                     // if (cnt == limitadd - 1)
@@ -168,7 +170,7 @@ function abc(start, stop) {
             }
             console.log('ALL FINISHED!');
             if (++lstcnt < limit)
-                abc(lstcnt);
+                abc(lstcnt, limit);
         }, function (err) {
             for (var i in browser) {
                 if (browser[i].test)
@@ -180,9 +182,10 @@ function abc(start, stop) {
             console.log('[05] Fatal error. Execution discontinued (' + dt.getHours() + ':' + dt.getMinutes() + ':' + dt.getSeconds() + '): ' + err.message);
             console.log(err.stack);
             if (++lstcnt < limit)
-                abc(lstcnt);
+                abc(lstcnt, limit);
         });
     }, 10000);
 }
 
-abc(494, 593);
+var arr = [170, 176, 178];
+abc(arr[0] - 1, arr[arr.length - 1]);

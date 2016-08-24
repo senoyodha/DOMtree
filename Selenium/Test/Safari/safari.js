@@ -80,7 +80,7 @@ else {
         log += tools.logDouble('Wrapping DOM and write into file');
         for (var i = start; i < limit; i++) {
             log += tools.logDouble('--Wrapping DOM into ' + files[i].replace('.html', '.txt'));
-            fs.writeFileSync(set[mode].pathOut + files[i].replace('.html', '.txt'), tools.DOMWrapper(doms[i - start], files[i]));
+            fs.writeFileSync(set[mode].pathOut + files[i].replace('.html', '.txt'), tools.DOMWrapper(doms[i - start], files[i], false));
         }
         log += tools.logDouble();
         log += comparator.compare(set[mode].pathOut, set[mode].pathCompare, set[mode].mode, '../');

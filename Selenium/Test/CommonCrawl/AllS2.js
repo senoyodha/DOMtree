@@ -27,8 +27,8 @@ function abc(start, stop) {
         Safari: {test: false},
         Firefox: {test: false},
         Opera: {test: false},
-        IE: {test: true},
-        Edge: {test: false},
+        IE: {test: false},
+        Edge: {test: true},
         PhantomJS: {test: false}
     };
 // -------------------------------------- //
@@ -168,7 +168,7 @@ function abc(start, stop) {
             }
             console.log('ALL FINISHED!');
             if (++lstcnt < limit)
-                abc(lstcnt);
+                abc(lstcnt, limit);
         }, function (err) {
             for (var i in browser) {
                 if (browser[i].test)
@@ -180,9 +180,11 @@ function abc(start, stop) {
             console.log('[05] Fatal error. Execution discontinued (' + dt.getHours() + ':' + dt.getMinutes() + ':' + dt.getSeconds() + '): ' + err.message);
             console.log(err.stack);
             if (++lstcnt < limit)
-                abc(lstcnt);
+                abc(lstcnt, limit);
         });
     }, 10000);
 }
 
-abc(494, 593);
+var arr = [106, 124, 148, 154, 176, 182, 200, 206, 207, 226, 236, 263, 282, 302, 313, 337, 491, 511, 517, 521, 531, 532, 533, 534, 535, 536, 537, 538, 539, 540, 541, 542, 543, 592];
+for (var i in arr)
+    abc(arr[i] - 1, arr[i]);

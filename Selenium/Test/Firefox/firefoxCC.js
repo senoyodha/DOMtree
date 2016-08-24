@@ -1,37 +1,38 @@
+function write(err) {
+    if (doms.length > 0) {
+        if (err != null)
+            log += tools.logDouble(err);
+        // log += tools.logDouble('Wrapping DOM and write into file');
+        // for (var i = start; i < start + doms.length; i++) {
+        //     log += tools.logDouble('--Wrapping DOM into ' + files[i].replace('.html', '.txt'));
+        //     fs.writeFileSync(set[mode].pathOut + files[i].replace('.html', '.txt'), tools.DOMWrapper(doms[i - start], files[i]));
+        // }
+        t = process.hrtime(t);
+        var rt = 'Running time: ' + (t[0] + (t[1] / 1000000000)) + ' sec';
+        console.log('\n' + rt);
+        log = rt + '\n\n' + log + '\n\n' + rt;
+        fs.writeFileSync(pathLog + 'FirefoxVsCC_' + set[mode].mode + (mode[0] == 'B' ? mode.slice(1) : '') + '_' + (start + 1) + 'to' + (doms.length + start) + '_' + curdate + '.txt', log);
+        console.log('\nEND: ' + files[(start + doms.length - 1)]);
+    }
+}
 var t = process.hrtime();
 var set = {
-    BNS: {
-        pathIn: '../../../HTMLCompare/TestSuite/Both/',
-        pathOut: '../../../HTMLCompare/DOM/Both/Firefox/',
-        pathCompare: '../../../HTMLCompare/DOM/Both/Original/',
-        mode: 'Out_B',
-        scriptOn: false
-    },
-    BS: {
-        pathIn: '../../../HTMLCompare/TestSuite/Both/',
-        pathOut: '../../../HTMLCompare/DOM/Both/Firefox/',
-        pathCompare: '../../../HTMLCompare/DOM/Both/Original/',
-        mode: 'Out_B',
-        scriptOn: true
-    },
     NS: {
-        pathIn: '../../../HTMLCompare/TestSuite/NoScript/',
-        pathOut: '../../../HTMLCompare/DOM/NoScript/Firefox/',
-        pathCompare: '../../../HTMLCompare/DOM/NoScript/Original/',
+        pathIn: '../../../HTMLCompare/TestSuite/CommonCrawl/NoScript/',
+        pathOut: '../../../HTMLCompare/DOM/CommonCrawl/NoScript/Firefox/',
         mode: 'Out_NS',
         scriptOn: false
     },
     S: {
-        pathIn: '../../../HTMLCompare/TestSuite/Scripted/',
-        pathOut: '../../../HTMLCompare/DOM/Scripted/Firefox/',
-        pathCompare: '../../../HTMLCompare/DOM/Scripted/Original/',
+        pathIn: '../../../HTMLCompare/TestSuite/CommonCrawl/Scripted/',
+        pathOut: '../../../HTMLCompare/DOM/CommonCrawl/Scripted/Firefox/',
         mode: 'Out_S',
         scriptOn: true
     }
 };
-var mode = 'BS';
+var mode = 'NS';
 var developer = false;
-
+var curdate = (new Date()).toISOString().substr(2, 17).replace("T", " ").replace(/\-/g, "").replace(/\:/g, "");
 var pathLog = '../../../HTMLCompare/Log/';
 var fs = require('fs');
 var tools = require('./../tools');
@@ -53,8 +54,8 @@ var scriptNS = fs.readFileSync('./domscriptNS.js', 'utf8');
 var files = fs.readdirSync(set[mode].pathIn);
 var doms = [];
 var pathTest = tools.convertNameURL(set[mode].pathIn, __dirname);
-var start = 0;
-var stop = 0;
+var start = 251;
+var stop = 452;
 var log = '';
 
 // var files2 = fs.readdirSync(set[mode].pathOut);
@@ -70,6 +71,7 @@ setTimeout(function () {
     driver.get(pathTest + files[start]);
     log += tools.logDouble('DOM extraction. Test file: ' + (limit - start) + '. Browser: Firefox. Test mode: ' + set[mode].mode);
     var cnt = start;
+    var t2 = process.hrtime();
     for (var i = start; i < limit; i++) {
         log += tools.logDouble('--Extracting DOM from ' + files[i]);
         driver.navigate().to(pathTest + files[i]);
@@ -86,54 +88,44 @@ setTimeout(function () {
                 driver.switchTo().alert().then(function () {
                     flag = true;
                 }, function () {
-                    flag = false;
                 });
                 return flag;
             }, 60000).then(function () {
                 driver.switchTo().alert().getText().then(function (dom) {
                     // console.log(++cnt);
-                    doms.push(JSON.parse(dom));
+                    fs.writeFileSync(set[mode].pathOut + files[cnt].replace('.html', '.txt'), tools.DOMWrapper(JSON.parse(dom), files[cnt]));
+                    t2 = process.hrtime(t2);
+                    log += tools.logDouble('--DOM extracted from ' + files[cnt++] + ' ' + (t2[0] + (t2[1] / 1000000000)) + ' sec');
+                    t2 = process.hrtime();
+                    // doms.push(JSON.parse(dom));
                 });
                 driver.switchTo().alert().accept();
             });
         }
         else
             driver.executeScript(script).then(function (dom) {
-                doms.push(dom);
+                fs.writeFileSync(set[mode].pathOut + files[cnt].replace('.html', '.txt'), tools.DOMWrapper(JSON.parse(dom), files[cnt]));
+                t2 = process.hrtime(t2);
+                log += tools.logDouble('--DOM extracted from ' + files[cnt++] + ' ' + (t2[0] + (t2[1] / 1000000000)) + ' sec');
+                t2 = process.hrtime();
+                // doms.push(dom);
             });
     }
 }, 7000);
 driver.wait(function () {
-    return doms.length == limit - start;
-    // return false;
-}, 5000000).then(function () {
-    log += tools.logDouble('Wrapping DOM and write into file');
-    for (var i = start; i < limit; i++) {
-        log += tools.logDouble('--Wrapping DOM into ' + files[i].replace('.html', '.txt'));
-        fs.writeFileSync(set[mode].pathOut + files[i].replace('.html', '.txt'), tools.DOMWrapper(doms[i - start], files[i]));
-    }
-    log += tools.logDouble();
-    log += comparator.compare(set[mode].pathOut, set[mode].pathCompare, set[mode].mode, '../');
-    t = process.hrtime(t);
-    var rt = 'Running time: ' + (t[0] + (t[1] / 1000000000)) + ' sec';
-    console.log('\n' + rt);
-    log = rt + '\n\n' + log + '\n\n' + rt;
-    fs.writeFileSync(pathLog + 'FirefoxVsHTML5lib_' + (developer ? 'D_' : '') + set[mode].mode + (mode[0] == 'B' ? mode.slice(1) : '') + '_' + (start != 0 || stop != 0 ? (start + 1) + 'to' + (doms.length + start) + '_' : '') + (new Date()).toISOString().substr(2, 17).replace("T", " ").replace(/\-/g, "").replace(/\:/g, "") + '.txt', log);
+    driver.switchTo().alert().then(function () {
+        driver.switchTo().alert().accept();
+    }, function (err) {
+    });
+    return cnt == limit;
+}, 50000000).then(function () {
+    write();
+    // driver.quit();
 }, function (err) {
-    log += tools.logDouble('Error: ' + err.stack);
-    log += tools.logDouble('Wrapping DOM and write into file');
-    for (var i = start; i < limit; i++) {
-        log += tools.logDouble('--Wrapping DOM into ' + files[i].replace('.html', '.txt'));
-        fs.writeFileSync(set[mode].pathOut + files[i].replace('.html', '.txt'), tools.DOMWrapper(doms[i - start], files[i]));
-    }
-    log += tools.logDouble();
-    log += comparator.compare(set[mode].pathOut, set[mode].pathCompare, set[mode].mode, '../');
-    t = process.hrtime(t);
-    var rt = 'Running time: ' + (t[0] + (t[1] / 1000000000)) + ' sec';
-    console.log('\n' + rt);
-    log = rt + '\n\n' + log + '\n\n' + rt;
-    fs.writeFileSync(pathLog + 'FirefoxVsHTML5lib_' + (developer ? 'D_' : '') + set[mode].mode + (mode[0] == 'B' ? mode.slice(1) : '') + '_' + (start + 1) + 'to' + (doms.length + start) + '_' + (new Date()).toISOString().substr(2, 17).replace("T", " ").replace(/\-/g, "").replace(/\:/g, "") + '.txt', log);
+    write('[07] + ' + err.message);
+    // driver.quit();
 });
+
 //
 // const webdriver = require('selenium-webdriver');
 // const Capabilities = require('selenium-webdriver/lib/capabilities').Capabilities;

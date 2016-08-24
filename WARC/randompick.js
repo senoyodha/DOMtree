@@ -7,8 +7,8 @@ var fs = require('fs');
 var pathIn = '../../CommonCrawl/';
 var pathOut = '../../CommonCrawl/Picked/';
 var set = {NS: {type: 'NoScript', arr: []}, S: {type: 'Scripted', arr: []}};
-var mode = 'S';
-var percent = 0.1;
+var mode = 'NS';
+var percent = 0.25;
 
 pathIn += set[mode].type + '/';
 var files = fs.readdirSync(pathIn);

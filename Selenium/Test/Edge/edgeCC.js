@@ -29,7 +29,7 @@ var set = {
         scriptOn: true
     }
 };
-var mode = 'BS';
+var mode = 'NS';
 
 if (!set[mode].scriptOn)
     console.log('Scripting cannot be turned off on Edge. Program is terminated.');
@@ -44,8 +44,8 @@ else {
     var files = fs.readdirSync(set[mode].pathIn);
     var doms = [];
     var pathTest = tools.convertNameURL(set[mode].pathIn, __dirname);
-    var start = 0;
-    var stop = 376;
+    var start = 484;
+    var stop = 0;
     var log = '';
 
     // var files2 = fs.readdirSync(set[mode].pathOut);

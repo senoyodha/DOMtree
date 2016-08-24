@@ -107,6 +107,7 @@ function DOMWrapper(dom, file, decode) {
     var ns = {svg: 'http://www.w3.org/2000/svg', math: 'http://www.w3.org/1998/Math/MathML'};
     var s = '#document\n';
     var prefix = '';
+    var cntemp = [0, []];
     for (var i in dom) {
         if (i == 0 && dom[i].nodeName == 'DOCTYPE') {
             s += '| <!DOCTYPE ' + dom[0].name +
@@ -117,10 +118,10 @@ function DOMWrapper(dom, file, decode) {
         else {
             switch (dom[i].nodeName) {
                 case '#text':
-                    s += '|' + '  '.repeat(dom[i].level + dom[i].template) + ' "' + (decode == false ? dom[i].nodeValue : decodeURI(dom[i].nodeValue)) + '"\n';
+                    s += '|' + '  '.repeat(dom[i].level + dom[i].template - cntemp[0]) + ' "' + (decode == false ? dom[i].nodeValue : decodeURI(dom[i].nodeValue)) + '"\n';
                     break;
                 case '#comment':
-                    s += '|' + '  '.repeat(dom[i].level + dom[i].template) + ' <!-- ' + (decode == false ? dom[i].nodeValue : decodeURI(dom[i].nodeValue)) + ' -->\n';
+                    s += '|' + '  '.repeat(dom[i].level + dom[i].template - cntemp[0]) + ' <!-- ' + (decode == false ? dom[i].nodeValue : decodeURI(dom[i].nodeValue)) + ' -->\n';
                     break;
                 default:
                     prefix = '';
@@ -135,15 +136,25 @@ function DOMWrapper(dom, file, decode) {
                         dom[i].attributes = fixMathAttr(dom[i]);
                     }
                     dom[i].attributes = fixForeignAttr(dom[i]);
-                    s += '|' + '  '.repeat(dom[i].level + dom[i].template) + ' <' + prefix + dom[i].nodeName + '>\n';
+                    s += '|' + '  '.repeat(dom[i].level + dom[i].template - cntemp[0]) + ' <' + prefix + dom[i].nodeName + '>\n';
                     if (dom[i].attributes != null && Object.keys(dom[i].attributes).length > 0) {
                         var attra = Object.keys(dom[i].attributes);
                         attra.sort();
                         for (var j in attra)
-                            s += '|' + '  '.repeat(dom[i].level + dom[i].template + 1) + ' ' + attra[j] + '="' + dom[i].attributes[attra[j]].value + '"\n';
+                            s += '|' + '  '.repeat(dom[i].level + dom[i].template - cntemp[0] + 1) + ' ' + attra[j] + '="' + dom[i].attributes[attra[j]].value + '"\n';
                     }
-                    if (dom[i].nodeName == 'template' && dom[i].namespace != ns['svg'])
-                        s += '|' + '  '.repeat(dom[i].level + dom[i].template + 1) + ' content\n';
+                    while (cntemp[0] > 0 && dom[i].level <= cntemp[1][cntemp[1].length - 1]) {
+                        cntemp[0]--;
+                        cntemp[1].pop();
+                    }
+                    if (dom[i].nodeName == 'template') {
+                        if (dom[i].namespace == ns['svg']) {
+                            cntemp[0]++;
+                            cntemp[1].push(dom[i].level);
+                        }
+                        else
+                            s += '|' + '  '.repeat(dom[i].level + dom[i].template - cntemp[0] + 1) + ' content\n';
+                    }
                     break;
             }
         }

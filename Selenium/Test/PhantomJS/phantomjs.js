@@ -29,7 +29,7 @@ var set = {
         scriptOn: true
     }
 };
-var mode = 'BS';
+var mode = 'S';
 
 if (!set[mode].scriptOn)
     console.log('Scripting cannot be turned off on PhantomJS. Program is terminated.');

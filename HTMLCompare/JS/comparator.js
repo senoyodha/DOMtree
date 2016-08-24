@@ -1,4 +1,4 @@
-function compare(path1, path2, mode, add) {
+function compare(path1, path2, mode, add, add2) {
     var path = [path1, path2];
     var fs = require('fs');
     var tools = require('./tools');
@@ -10,7 +10,7 @@ function compare(path1, path2, mode, add) {
         add = '';
 
     var list = {};
-    var listFile = fs.readFileSync(add + '../../HTMLCompare/TestSuite/list_' + mode + '.txt', 'utf8');
+    var listFile = fs.readFileSync(add + (add2 ? '' : '../') + '../HTMLCompare/TestSuite/list_' + mode + '.txt', 'utf8');
     listFile = listFile.split('\n');
     for (var i in listFile)
         list[listFile[i].split(': ')[0]] = listFile[i].split(': ')[1];

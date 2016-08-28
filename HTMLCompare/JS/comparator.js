@@ -25,11 +25,11 @@ function compare(path1, path2, mode, add, add2) {
     for (var i in filetmp[c[0]]) {
         var st = '--Comparing ' + filetmp[c[0]][i] + ': ';
         if (arfile[c[0]][filetmp[c[0]][i]] == arfile[c[1]][filetmp[c[0]][i]]) {
-            st += 'Agree';
+            st.push('Agree');
             agree[0].push(filetmp[c[0]][i]);
         }
         else {
-            st += 'Disagree';
+            st.push('Disagree');
             agree[1].push(filetmp[c[0]][i]);
         }
         log += tools.logDouble(st);
@@ -46,8 +46,76 @@ function compare(path1, path2, mode, add, add2) {
     return log;
 }
 
+function compareMiss(path1, path2, override, log) {
+    function doLog(txt) {
+        if (log)
+            console.log(txt);
+        return txt;
+    }
+
+    var fs = require('fs');
+    var path = [path1, path2];
+    var st = [];
+    var arr = [[], []];
+    var miss = [[], []];
+    var comp = {agr: [], dis: []};
+    for (var i in path) {
+        var dir = fs.readdirSync(path[i]);
+        for (var j in dir) {
+            arr[i][parseInt(dir[j].substr(0, 4))] = true;
+        }
+    }
+    var max = (override ? override : Math.max(arr[0].length, arr[1].length) - 1);
+    st.push(doLog('Comparing files between ' + path[0] + ' and ' + path[1] + '. Max: ' + max));
+    console.log('Comparing files between ' + path[0] + ' and ' + path[1] + '. Max: ' + max);
+    for (var i = 1; i <= max; i++) {
+        var name = ('0000' + i).slice(-4) + '.txt';
+        if (i % 200 == 0)
+            console.log(i);
+        var flag = true;
+        var broM = [false, false];
+        var broN = [path[0].split('/').slice(-2, -1), path[1].split('/').slice(-2, -1)];
+        for (var j in arr)
+            if (!arr[j][i]) {
+                miss[j].push(name);
+                broM[j] = true;
+                flag = false;
+            }
+        if (!flag) {
+            st.push(doLog('Processing ' + name + ': ' + (broM[0] ? broN[0] + ' miss.' : '') + (broM[1] ? broN[1] + ' miss' : '')));
+        }
+        else {
+            if (fs.readFileSync(path[0] + name, 'utf8') == fs.readFileSync(path[1] + name, 'utf8')) {
+                st.push(doLog('Processing ' + name + ': Agree'));
+                comp.agr.push(name);
+            }
+            else {
+                st.push(doLog('Processing ' + name + ': Disagree'));
+                comp.dis.push(name);
+            }
+        }
+    }
+    st.push(doLog('TOTAL (out of ' + max + '): Agree: ' + comp.agr.length + '. Disagree: ' + comp.dis.length + '\n' + broN[0] + ': ' + miss[0].length + ' misses. ' + broN[1] + ': ' + miss[1].length + ' misses. '));
+    console.log('TOTAL (out of ' + max + '): Agree: ' + comp.agr.length + '. Disagree: ' + comp.dis.length + '\n' + broN[0] + ': ' + miss[0].length + ' misses. ' + broN[1] + ': ' + miss[1].length + ' misses. ');
+    console.log('-----------------------------');
+    if (comp.dis.length > 0) {
+        st.push(doLog('\nList of disagreements:'));
+        for (var i in comp.dis) {
+            st.push(doLog(comp.dis[i] + ' --> ' + comp.dis[i].substr(0, 4) + '.html'));
+        }
+        st.push(doLog('TOTAL (out of ' + max + '): Agree: ' + comp.agr.length + '. Disagree: ' + comp.dis.length + '\n' + broN[0] + ': ' + miss[0].length + ' misses. ' + broN[1] + ': ' + miss[1].length + ' misses. '));
+    }
+    return st;
+}
+
 module.exports = {
-    compare: compare
+    compare: compare,
+    compareMiss: compareMiss
 };
+
+// var a = [];
+// a[1] = 1;
+// a[4];
+// console.log(a[3] == null);
 
 // compare('../DOM/NoScript/Chrome/', '../DOM/NoScript/Original/');

@@ -24,10 +24,10 @@ function abc(start, stop) {
 // -------------------------------------- //
     var browser = {
         Chrome: {test: false},
-        Safari: {test: false},
+        Safari: {test: true},
         Firefox: {test: false},
         Opera: {test: false},
-        IE: {test: true},
+        IE: {test: false},
         Edge: {test: false},
         PhantomJS: {test: false}
     };
@@ -93,6 +93,7 @@ function abc(start, stop) {
         var t2 = process.hrtime();
 // console.log('Processing ' + files[cnt]);
         console.log('Starts from: ' + files[cnt]);
+        console.log((cnt + 1) + ' ' + arr.indexOf(cnt + 1) + ' ' + limit + ' ' + (cnt < limit));
         browser[initial].driver.wait(function () {
             while (arr.indexOf(cnt + 1) == -1 && cnt < limit)
                 cnt++;
@@ -187,5 +188,5 @@ function abc(start, stop) {
     }, 10000);
 }
 
-var arr = [170, 176, 178];
+var arr = [525];
 abc(arr[0] - 1, arr[arr.length - 1]);

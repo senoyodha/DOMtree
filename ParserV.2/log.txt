@@ -1,42 +1,166 @@
 --PARSING PROCESS--
-,Input: <!doctype>
+,Input: <script></S
 ,Call function PARSINGPROCESS (12.2) (parser.js)
 ,Call function TOKENIZATION (12.2.4) (tokenization.js)
-,	Input stream: <!doctype>
+,	Input stream: <script></S
 ,	Current input position: -1 --> -1 (null)
 ,	Starting state: null --> Data state
 ,	Adjusted node: null --> null
 ,	Start tokenizing the stream. Enter "Data state" (12.2.4.1) (initialisation)
 ,		Consume < (U+003C)
 ,	Switch to "Tag open state" (12.2.4.6)
-,		Consume ! (U+0021)
-,	Switch to "Markup declaration open state" (12.2.4.42)
-,		Consume d (U+0064)
-,		Consume o (U+006F)
+,		Consume s (U+0073)
+,		Reconsume s (U+0073) in "Tag name state" (12.2.4.8)
+,	Switch to "Tag name state" (12.2.4.8)
+,		Consume s (U+0073)
 ,		Consume c (U+0063)
-,		Consume t (U+0074)
-,		Consume y (U+0079)
+,		Consume r (U+0072)
+,		Consume i (U+0069)
 ,		Consume p (U+0070)
-,		Consume e (U+0065)
-,	Switch to "DOCTYPE state" (12.2.4.53)
+,		Consume t (U+0074)
 ,		Consume > (U+003E)
-,		Parse error: Unexpected character in DOCTYPE declaration (PE060)
-,		Reconsume > (U+003E) in "Before DOCTYPE name state" (12.2.4.54)
-,	Switch to "Before DOCTYPE name state" (12.2.4.54)
-,		Consume > (U+003E)
-,		Parse error: Close the DOCTYPE token before it is completed (PE062)
-,		Emit: DOCTYPE token ({"type":"DOCTYPE","name":null,"publicId":null,"systemId":null,"flag":"on","namespace":null})
+,		Emit: StartTag token ({"type":"StartTag","name":"script","flag":false,"attribute":[],"namespace":null})
 ,	Switch to "Data state" (12.2.4.1)
 ,End function TOKENIZATION
+,---------------------
+,Call function TREECONSTRUCTION (12.2.5) (treeconstruction.js)
+,	modeList variable: provided
+,	Tree construction stage starts from: The "Initial" insertion mode (12.2.5.4.1) (initialisation)
+,	Processing token: {"type":"StartTag","name":"script","flag":false,"attribute":[],"namespace":null}
+,	Run Preprocess function
+,		Token name: script. Namespace added: http://www.w3.org/1999/xhtml
+,	Run Tree construction dispatcher (12.2.5)
+,		Process normally
+,		Parse error: Invalid token: Not an iframe srcdoc document (PE118)
+,		Reprocess the token in The "Before html" insertion mode (12.2.5.4.2)
+,	Switch to The "Before html" insertion mode (12.2.5.4.2)
+,	Call Insert node function
+,		Insert Html element to Root element. Mode: last
+,		 The navigation of a browsing context part is not yet supported
+,		Reprocess the token in The "Before head" insertion mode (12.2.5.4.3)
+,	Switch to The "Before head" insertion mode (12.2.5.4.3)
+,	Call Insert an HTML element function
+,	Call Insert a foreign element function
+,	Call Appropriate insert algorithm:
+,		Override: not provided
+,	Call Create element algorithm:
+,		Parent: html, token: {"type":"StartTag","name":"head","flag":false,"attribute":[],"namespace":null}, namespace: http://www.w3.org/1999/xhtml
+,	Call Lookup custom element function:
+,		This function is not yet supported. Return to main function
+,	Call Creating an element function:
+,		This function is not yet supported. Return to main function
+,		Assigning HTMLUnknownElement process is not yet supported
+,	Call Insert node function
+,		Insert Head element to Html element. Mode: last
+,		Reprocess the token in The "In head" insertion mode (12.2.5.4.4)
+,	Switch to The "In head" insertion mode (12.2.5.4.4)
+,	Call Appropriate insert algorithm:
+,		Override: not provided
+,	Call Create element algorithm:
+,		Parent: head, token: {"type":"StartTag","name":"script","flag":false,"attribute":{},"namespace":"http://www.w3.org/1999/xhtml"}, namespace: http://www.w3.org/1999/xhtml
+,	Call Lookup custom element function:
+,		This function is not yet supported. Return to main function
+,	Call Creating an element function:
+,		This function is not yet supported. Return to main function
+,		Assigning HTMLUnknownElement process is not yet supported
+,	Call Insert node function
+,		Insert Script element to Head element. Mode: last
+,	Switch temporary to The "Text" insertion mode (12.2.5.4.8), with return mode The "In head" insertion mode (12.2.5.4.4)
+,End function TREECONSTRUCTION
 ,=====================
 ,Call function TOKENIZATION (12.2.4) (tokenization.js)
-,	Input stream: <!doctype>
-,	Current input position: 9 --> 9 (>)
-,	Starting state: Data state --> Data state
-,	Adjusted node: null --> null
-,	Start tokenizing the stream. Enter "Data state" (12.2.4.1) (continuation)
+,	Input stream: <script></S
+,	Current input position: 7 --> 7 (>)
+,	Starting state: Script data state --> Script data state
+,	Adjusted node: [object Object] --> [object Object]
+,	Start tokenizing the stream. Enter "Script data state" (12.2.4.4) (continuation)
+,		Consume < (U+003C)
+,	Switch to "Script data less-than sign state" (12.2.4.15)
+,		Consume / (U+002F)
+,	Switch to "Script data end tag open state" (12.2.4.16)
+,		Consume S (U+0053)
+,		Reconsume S (U+0053) in "Script data end tag name state" (12.2.4.17)
+,	Switch to "Script data end tag name state" (12.2.4.17)
+,		Consume S (U+0053)
 ,		Consume EOF
-,		Emit: End-of-file token ({"type":"End-of-file","data":"Data state"})
+,		Emit: Character token ({"type":"Character","data":"<"})
+,		Emit: Character token ({"type":"Character","data":"/"})
+,		Emit: Character token ({"type":"Character","data":"s"})
+,		Reconsume EOF in "Script data state" (12.2.4.4)
+,	Switch to "Script data state" (12.2.4.4)
 ,End function TOKENIZATION
+,---------------------
+,Call function TREECONSTRUCTION (12.2.5) (treeconstruction.js)
+,	modeList variable: provided
+,	Tree construction stage starts from: The "Text" insertion mode (12.2.5.4.8) (continuation)
+,	Processing token: {"type":"Character","data":"<"}
+,	Run Preprocess function
+,		Character token. Nothing to be preprocessed
+,	Run Tree construction dispatcher (12.2.5)
+,		Process normally
+,	Call Insert a character function
+,	Call Appropriate insert algorithm:
+,		Override: not provided
+,	Call Insert node function
+,		Insert Text element to Script element. Mode: last
+,	Processing token: {"type":"Character","data":"/"}
+,	Run Preprocess function
+,		Character token. Nothing to be preprocessed
+,	Run Tree construction dispatcher (12.2.5)
+,		Process normally
+,	Call Insert a character function
+,	Call Appropriate insert algorithm:
+,		Override: not provided
+,	Processing token: {"type":"Character","data":"s"}
+,	Run Preprocess function
+,		Character token. Nothing to be preprocessed
+,	Run Tree construction dispatcher (12.2.5)
+,		Process normally
+,	Call Insert a character function
+,	Call Appropriate insert algorithm:
+,		Override: not provided
+,End function TREECONSTRUCTION
+,=====================
+,Call function TOKENIZATION (12.2.4) (tokenization.js)
+,	Input stream: <script></S
+,	Current input position: 10 --> 10 (S)
+,	Starting state: Script data state --> Script data state
+,	Adjusted node: [object Object] --> [object Object]
+,	Start tokenizing the stream. Enter "Script data state" (12.2.4.4) (continuation)
+,		Consume EOF
+,		Emit: End-of-file token ({"type":"End-of-file","data":"Script data state"})
+,End function TOKENIZATION
+,---------------------
+,Call function TREECONSTRUCTION (12.2.5) (treeconstruction.js)
+,	modeList variable: provided
+,	Tree construction stage starts from: The "Text" insertion mode (12.2.5.4.8) (continuation)
+,	Processing token: {"type":"End-of-file","data":"Script data state"}
+,	Run Preprocess function
+,		End-of-file token. Nothing to be preprocessed
+,	Run Tree construction dispatcher (12.2.5)
+,		Process normally
+,		Parse error: EOF token on Text insertion mode (PE137)
+,	Switch to The "In head" insertion mode (12.2.5.4.4)
+,		Reprocess the token in The "After head" insertion mode (12.2.5.4.6)
+,	Switch to The "After head" insertion mode (12.2.5.4.6)
+,	Call Insert an HTML element function
+,	Call Insert a foreign element function
+,	Call Appropriate insert algorithm:
+,		Override: not provided
+,	Call Create element algorithm:
+,		Parent: html, token: {"type":"StartTag","name":"body","flag":false,"attribute":[],"namespace":null}, namespace: http://www.w3.org/1999/xhtml
+,	Call Lookup custom element function:
+,		This function is not yet supported. Return to main function
+,	Call Creating an element function:
+,		This function is not yet supported. Return to main function
+,		Assigning HTMLUnknownElement process is not yet supported
+,	Call Insert node function
+,		Insert Body element to Html element. Mode: last
+,		Reprocess the token in The "In body" insertion mode (12.2.5.4.7)
+,	Switch to The "In body" insertion mode (12.2.5.4.7)
+,	Call function Stop Parsing (12.2.6)
+,		Script, spin, queue a task sections are currently not supported
+,	End function Tree Construction
+,End function TREECONSTRUCTION
 ,=====================
 ,--END OF PARSING PROCESS--

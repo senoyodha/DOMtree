@@ -422,7 +422,7 @@ try {
             if (flagAny) {
                 stateSup.emitTag(new cls.tokenCharCom('Character', '\u003C')); // Less-than sign (<)
                 stateSup.emitTag(new cls.tokenCharCom('Character', '\u002F')); // Solidus (/)
-                for (var i in tempBuffer)
+                for (var i = 0; i < tempBuffer.length; i++)
                     stateSup.emitTag(new cls.tokenCharCom('Character', tempBuffer[i]));
                 stateSup.reconsumeIn('RCDATA state');
             }
@@ -491,7 +491,7 @@ try {
             if (flagAny) {
                 stateSup.emitTag(new cls.tokenCharCom('Character', '\u003C')); // Less-than sign (<)
                 stateSup.emitTag(new cls.tokenCharCom('Character', '\u002F')); // Solidus (/)
-                for (var i in tempBuffer)
+                for (var i = 0; i < tempBuffer.length; i++)
                     stateSup.emitTag(new cls.tokenCharCom('Character', tempBuffer[i]));
                 stateSup.reconsumeIn('RAWTEXT state');
             }
@@ -565,7 +565,7 @@ try {
             if (flagAny) {
                 stateSup.emitTag(new cls.tokenCharCom('Character', '\u003C')); // Less-than sign (<)
                 stateSup.emitTag(new cls.tokenCharCom('Character', '\u002F')); // Solidus (/)
-                for (var i in tempBuffer)
+                for (var i = 0; i < tempBuffer.length; i++)
                     stateSup.emitTag(new cls.tokenCharCom('Character', tempBuffer[i]));
                 stateSup.reconsumeIn('Script data state');
             }
@@ -746,7 +746,7 @@ try {
             if (flagAny) {
                 stateSup.emitTag(new cls.tokenCharCom('Character', '\u003C')); // Less-than sign (<)
                 stateSup.emitTag(new cls.tokenCharCom('Character', '\u002F')); // Solidus (/)
-                for (var i in tempBuffer)
+                for (var i = 0; i < tempBuffer.length; i++)
                     stateSup.emitTag(new cls.tokenCharCom('Character', tempBuffer[i]));
                 stateSup.reconsumeIn('Script data escaped state');
             }
@@ -2207,6 +2207,7 @@ function tokenization(streamIn, currentInputIn, startState, adjustedNodeIn, addi
         return ({state: state, logs: logs, currentInput: currentInput});
     }
     catch (err) {
+        console.log(err.stack);
         return ({state: state, logs: logs, currentInput: currentInput, err: err});
     }
 }

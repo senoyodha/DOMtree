@@ -48,6 +48,9 @@ var stop = 452;
 var log = '';
 
 // driver.manage().timeouts().pageLoadTimeout(66000);
+driver.manage().timeouts().pageLoadTimeout(60000);
+driver.manage().timeouts().implicitlyWait(60000);
+driver.manage().timeouts().setScriptTimeout(60000);
 
 if (start > stop && stop != 0) {
     var temp = start;

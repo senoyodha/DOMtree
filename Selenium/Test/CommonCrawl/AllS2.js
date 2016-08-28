@@ -24,11 +24,11 @@ function abc(start, stop) {
 // -------------------------------------- //
     var browser = {
         Chrome: {test: false},
-        Safari: {test: false},
+        Safari: {test: true},
         Firefox: {test: false},
         Opera: {test: false},
         IE: {test: false},
-        Edge: {test: true},
+        Edge: {test: false},
         PhantomJS: {test: false}
     };
 // -------------------------------------- //
@@ -184,7 +184,13 @@ function abc(start, stop) {
         });
     }, 10000);
 }
+var shuffle = function (v) {
+    for (var j, x, i = v.length; i; j = parseInt(Math.random() * i), x = v[--i], v[i] = v[j], v[j] = x);
+    return v;
+};
 
-var arr = [106, 124, 148, 154, 176, 182, 200, 206, 207, 226, 236, 263, 282, 302, 313, 337, 491, 511, 517, 521, 531, 532, 533, 534, 535, 536, 537, 538, 539, 540, 541, 542, 543, 592];
+var arr = [461, 525];
+arr = shuffle(arr);
 for (var i in arr)
+// for (var i = arr.length - 1; i >= 0; i--)
     abc(arr[i] - 1, arr[i]);

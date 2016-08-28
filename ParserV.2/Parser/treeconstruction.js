@@ -133,6 +133,8 @@ try {
                     return false;
                     break;
                 case 'DOCTYPE':
+                    return true;
+                    break;
                 case 'StartTag':
                 case 'EndTag':
                     if (token.name.indexOf(':') == -1)
@@ -169,8 +171,8 @@ try {
                         token.attribute = {};
                     return true;
                     break;
-                case 'Comment':
                 case 'Character':
+                case 'Comment':
                 case 'End-of-file':
                     logs.push('\t\t' + token.type + ' token. Nothing to be preprocessed');
                     return true;
@@ -195,10 +197,11 @@ try {
         },
         insertNode: function (target, newNode, mode) {
             // if (currentInput == 54) {
-            //     console.log(target.type + " " + mode + " " + newNode.type);
-            //     console.log(newNode);
+            //     // console.log(target.type + " " + mode + " " + newNode.type);
+            //     // console.log(newNode);
             // }
             logs.push('\tCall Insert node function');
+            // console.log('111 ' + newNode.type);
             logs.push('\t\tInsert ' + newNode.type.toProperCase() + ' element to ' + target.type.toProperCase() + ' element. Mode: ' + mode);
             if (mode == 'first' || mode == 'last') {
                 newNode.parent = target;
@@ -212,7 +215,7 @@ try {
                     target.firstChild = newNode;
                 }
                 else {
-                    // if (currentInput == 54) console.log('ok');
+                    // if (currentInput == 54) // console.log('ok');
                     target.lastChild.next = newNode;
                     newNode.prev = target.lastChild;
                     target.lastChild = newNode;
@@ -285,7 +288,8 @@ try {
         },
         getNextToken: function () {
             logs.push('\tCall Get next token function');
-            tknz.tokenization(stream, currentInput, (modeList.stateNew == null ? state : modeList.stateNew), modeList.adjustedNode());
+            var res = tknz.tokenization(stream, currentInput, (modeList.stateNew == null ? state : modeList.stateNew), modeList.adjustedNode());
+            return res.state.emit;
         }
 
     };
@@ -331,7 +335,7 @@ try {
                             lastTable = i;
                     }
                     if (lastTemplate != null && (lastTable == null || (lastTable != null && lastTemplate > lastTable)))
-                        return {target: modeList.stackOpen[lastTemplate].contents, mode: 'last'};
+                        return {target: modeList.stackOpen[lastTemplate], mode: 'last'};
                     else if (lastTable == null)
                         return {target: modeList.stackOpen[0], mode: 'last'};
                     else if (modeList.stackOpen[lastTable].parent != null)
@@ -343,9 +347,11 @@ try {
                     return {target: target, mode: 'last'};
             })();
             if (adjusted.target.type == 'template' && adjusted.mode == 'last')
-                adjusted.target = adjusted.target.contents;
+                adjusted.target = adjusted.target; // --> If needed to change to Contents
             else if (adjusted.target.parent.type == 'template' && adjusted.mode == 'before')
-                adjusted = {target: adjusted.target.parent.contents, mode: 'last'};
+                adjusted = {target: adjusted.target.parent, mode: 'last'};
+            // console.log(adjusted.target == null ? '333 ' + adjusted : '222 ' + adjusted.target.type);
+            // Improvisation: NO CONTENTS ON THE TEMPLATE ELEMENT!
             return adjusted;
         },
         createElement: function (parent, namespace, token) {
@@ -405,7 +411,7 @@ try {
                 reset(element);
             if (['button', 'fieldset', 'input', 'keygen', 'object', 'output', 'select', 'textarea', 'img'].indexOf(element.type) != -1 &&
                 modeList.formPointer != null && noTemplate() && (['button', 'fieldset', 'input', 'keygen', 'object', 'output',
-                    'select', 'textarea'].indexOf(newNode) == -1 || token.attribute['form'] == null) && isSameHomeTree(parent, modeList.formPointer))
+                    'select', 'textarea'].indexOf(element.type) == -1 || token.attribute['form'] == null) && isSameHomeTree(parent, modeList.formPointer))
                 element.formOwner = modeList.formPointer;
             return element;
         },
@@ -424,7 +430,9 @@ try {
         insertCharacter: function (character) {
             logs.push('\tCall Insert a character function');
             var data = character;
+            // console.log('111 ' + character);
             var adjustInsert = this.appropriateInsert();
+            // console.log(adjustInsert);
             var type = (adjustInsert.mode == 'last' ? adjustInsert.target.constructor.name : adjustInsert.target.parent.constructor.name);
             if (type == 'documents')
                 return;
@@ -872,15 +880,19 @@ try {
                     lastNode = node;
                 }
                 var insertTemp = this.appropriateInsert(commonAncestor);
-                // if (currentInput == 54) console.log('----------');
+                // if (currentInput == 54) // console.log('----------');
                 modeSup.insertNode(insertTemp.target, lastNode, insertTemp.mode);
-                // if (currentInput == 54) console.log('----------');
+                // if (currentInput == 54) // console.log('----------');
                 var newEl = this.createElement(furthestBlock, nsEl['html'], formatEl.token);
-                while (true) {
-                    modeSup.insertNode(newEl, modeSup.removeNode(furthestBlock.firstChild), 'last');
-                    if (furthestBlock.firstChild.type == null)
-                        break;
-                }
+                // console.log(furthestBlock);
+                if (furthestBlock.firstChild.type != null)
+                    while (true) {
+                        var rem = modeSup.removeNode(furthestBlock.firstChild);
+                        modeSup.insertNode(newEl, rem, 'last');
+                        if (furthestBlock.firstChild.type == null)
+                            break;
+                    }
+                // console.log(furthestBlock);
                 modeSup.insertNode(furthestBlock, newEl, 'last');
                 modeList.listFormat.splice(modeList.listFormat.indexOf(formatEl), 1);
                 modeList.listFormat.splice(bookmark, 0, newEl);
@@ -922,6 +934,7 @@ try {
                     newNode.name = token.name != null ? token.name : '';
                     newNode.publicId = token.publicId != null ? token.publicId : '';
                     newNode.systemId = token.systemId != null ? token.systemId : '';
+                    // console.log(newNode);
                     modeList.document.doctype = newNode;
 
                     var arrayPublic = ['-//W3O//DTD W3 HTML Strict 3.0//EN//'.toUpperCase(), '-/W3C/DTD HTML 4.0 Transitional/EN'.toUpperCase(), 'HTML'];
@@ -941,26 +954,26 @@ try {
                             '-//W3C//DTD HTML 3.2S Draft//', '-//W3C//DTD HTML 4.0 Frameset//', '-//W3C//DTD HTML 4.0 Transitional//', '-//W3C//DTD HTML Experimental 19960712//',
                             '-//W3C//DTD HTML Experimental 970421//', '-//W3C//DTD W3 HTML//', '-//W3O//DTD W3 HTML 3.0//', '-//WebTechs//DTD Mozilla HTML 2.0//', '-//WebTechs//DTD Mozilla HTML//'];
                         for (var i in arrayPublic2)
-                            if (token.publicId.substr(0, arrayPublic2[i].length).toUpperCase() == arrayPublic2[i].toUpperCase())
+                            if (newNode.publicId.substr(0, arrayPublic2[i].length).toUpperCase() == arrayPublic2[i].toUpperCase())
                                 return true;
                         arrayPublic2 = ['-//W3C//DTD HTML 4.01 Frameset//', '-//W3C//DTD HTML 4.01 Transitional//'];
                         for (var i in arrayPublic2)
-                            if (token.systemId == null && token.publicId.substr(0, arrayPublic2[i].length).toUpperCase() == arrayPublic2[i].toUpperCase())
+                            if (newNode.systemId == null && newNode.publicId.substr(0, arrayPublic2[i].length).toUpperCase() == arrayPublic2[i].toUpperCase())
                                 return true;
                         return false;
                     };
                     var flagStart2 = function () {
                         var arrayPublic2 = ['-//W3C//DTD XHTML 1.0 Frameset//', '-//W3C//DTD XHTML 1.0 Transitional//'];
                         for (var i in arrayPublic2)
-                            if (token.publicId.substr(0, arrayPublic2[i].length).toUpperCase() == arrayPublic2[i].toUpperCase())
+                            if (newNode.publicId.substr(0, arrayPublic2[i].length).toUpperCase() == arrayPublic2[i].toUpperCase())
                                 return true;
                         arrayPublic2 = ['-//W3C//DTD HTML 4.01 Frameset//', '-//W3C//DTD HTML 4.01 Transitional//'];
                         for (var i in arrayPublic2)
-                            if (token.systemId != null && token.publicId.substr(0, arrayPublic2[i].length).toUpperCase() == arrayPublic2[i].toUpperCase())
+                            if (newNode.systemId != null && newNode.publicId.substr(0, arrayPublic2[i].length).toUpperCase() == arrayPublic2[i].toUpperCase())
                                 return true;
                         return false;
                     };
-                    var flagQuirks = token.flag == 'on' || token.name != 'html' || arrayPublic.indexOf(token.publicId.toUpperCase()) != -1 || token.systemId.toUpperCase() == 'http://www.ibm.com/data/dtd/v11/ibmxhtml1-transitional.dtd'.toUpperCase() || flagStart();
+                    var flagQuirks = newNode.flag == 'on' || newNode.name != 'html' || arrayPublic.indexOf(newNode.publicId.toUpperCase()) != -1 || newNode.systemId.toUpperCase() == 'http://www.ibm.com/data/dtd/v11/ibmxhtml1-transitional.dtd'.toUpperCase() || flagStart();
                     if (modeList.document.type != 'iframe' && flagQuirks)
                         modeList.document.mode = 'quirks';
                     else if (modeList.document.type != 'iframe' && flagStart2())
@@ -1217,7 +1230,7 @@ try {
                                 }
                                 modeAlgo.clearActiveFormat();
                                 modeList.stackTemplate.pop();
-                                modeSup.resetModeAppropriately();
+                                modeAlgo.resetModeAppropriately();
                             }
                             break;
                         default:
@@ -1667,7 +1680,7 @@ try {
                             if (modeAlgo.hasElementScope('nobr')) {
                                 modeSup.emitTag(new cls.tokenParEr('Stack has nobr in element scope (PE225)'));
                                 if (currentInput == 54) {
-                                    console.log(tools.treeViewer(modeList.document));
+                                    // console.log(tools.treeViewer(modeList.document));
                                 }
                                 resAdopt = modeAlgo.adoptionAgency('nobr');
                                 if (resAdopt == -1)
@@ -1740,6 +1753,7 @@ try {
                         case 'textarea':
                             modeAlgo.insertHTMLElement(token);
                             var nextToken = modeSup.getNextToken();
+                            // console.log(nextToken);
                             if (nextToken.type == 'Character' && nextToken.name == '\u000A') // Line feed character (LF)
                                 modeList.ignoreTokenFlag = true;
                             modeList.stateNew = 'RCDATA state';
@@ -2171,7 +2185,7 @@ try {
                                 modeSup.emitTag(new cls.tokenParEr('Input token in table (PE143)'));
                                 modeAlgo.insertHTMLElement(token);
                                 modeList.stackOpen.pop();
-                                modeAlgo.acknowledgeSelfClose(token);
+                                modeSup.acknowledgeSelfClose(token);
                             }
                             break;
                         case 'form':
@@ -2375,7 +2389,7 @@ try {
                         case 'col':
                             modeAlgo.insertHTMLElement(token);
                             modeList.stackOpen.pop();
-                            modeAlgo.acknowledgeSelfClose(token);
+                            modeSup.acknowledgeSelfClose(token);
                             break;
                         case 'template':
                             modeSup.usingRules('In head', token);
@@ -2989,10 +3003,10 @@ try {
                         case 'frame':
                             modeAlgo.insertHTMLElement(token);
                             modeList.stackOpen.pop();
-                            modeAlgo.acknowledgeSelfClose(token);
+                            modeSup.acknowledgeSelfClose(token);
                             break;
                         case 'noframes':
-                            modeSup.usingRules('In head');
+                            modeSup.usingRules('In head', token);
                             break;
                         default:
                             modeSup.emitTag(new cls.tokenParEr('Invalid token. Ignore the token (PE190)'));
@@ -3402,10 +3416,12 @@ function treeConstruction(stateIn, streamIn, modeListIn, currentInputIn) {
         // Main process
         for (var i in stateIn.emit) {
             var token = stateIn.emit[i];
-            // console.log(token.type + " " + token.name);
+            // // console.log(token.type + " " + token.name);
             logs.push('\tProcessing token: ' + JSON.stringify(token));
             var res = modeSup.preprocess(token);
             if (res) { // If the token is not a ParseError token
+                reProcess = true;
+                reProcess2 = true;
                 while (reProcess2) {
                     reProcess2 = false;
                     res = modeAlgo.dispatcher(token);
@@ -3415,28 +3431,30 @@ function treeConstruction(stateIn, streamIn, modeListIn, currentInputIn) {
                             cnt++;
                             // if (cnt > 10)
                             //     break;
-                            // console.log(JSON.stringify(token) + " " + modeSup.now());
+                            // // console.log(JSON.stringify(token) + " " + modeSup.now());
                             reProcess = false;
                             modeDef[modeSup.convert(modeSup.now())](token);
                         }
-                        // console.log(1);
+                        // // console.log(1);
                     }
-                    // console.log(2);
+                    // // console.log(2);
                 }
-                // console.log(3);
+                // // console.log(3);
             }
-            // console.log(4);
+            // // console.log(4);
         }
 
-        // console.log('escape');
+        // // console.log('escape');
         // End of function
+        // console.log(modeList.document.firstChild.firstChild.firstChild);
         logs.push('End function TREECONSTRUCTION');
-        // console.log(5);
+        // // console.log(5);
         // Set the adjust current node
         modeList.adjustedNode = modeList.adjustedNode();
         return ({modeList: modeList, logs: logs});
     }
     catch (err) {
+        console.log(err.stack);
         return ({modeList: modeList, logs: logs, err: err});
     }
 }

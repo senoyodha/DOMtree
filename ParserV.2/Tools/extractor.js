@@ -35,9 +35,12 @@ function extract(path, mode, html5lib) {
         for (var i in files)
             html.push(fs.readFileSync(path + files[i], 'utf8'));
     arr.push('Input test\t: ' + html.length, '----------');
+    console.log(html.length);
 
     for (var i in html) {
+        console.log('Processing ' + files[i] + ': ' + html[i].length + ' char');
         var res = parse.parsing(html[i], true, addarr[i]).state.emit;
+        console.log('ok');
         for (var j in res) {
             res[j].type = res[j].type.replace('End-of-file', 'EndOfFile');
             token[res[j].type].tot++;
@@ -155,9 +158,9 @@ function extract(path, mode, html5lib) {
     return arr;
 }
 
-var path = '../../HTMLCompare/TestSuite/ALL/';
+var path = '../../HTMLCompare/TestSuite/CommonCrawl/NoScript/';
 // var path = '../../TestLib/HTML5lib/Tokenizer/';
-var mode = 'tree';
+var mode = 'CC';
 var html5lib = false;
 var pathLog = '../Log/';
 extract(path, mode, html5lib);

@@ -1,7 +1,7 @@
 var fs = require('fs');
 var pathIn = '../HTMLCompare/DOM/CommonCrawl/Scripted/';
 var b = ['Chrome', 'Edge', 'Firefox', 'IE', 'Opera', 'PhantomJS', 'Safari'];
-var c = 3;
+var c = 4;
 
 pathIn += b[c] + '/';
 var start = 1;

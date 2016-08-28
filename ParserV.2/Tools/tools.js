@@ -293,12 +293,278 @@ function treeTest(path, showLog, falseOnly) {
         logShown(arlast[i]);
     return ({detail: detail, summary: summary});
 }
+
+function fixSVGName(el) {
+    var svg = {
+        altglyph: 'altGlyph',
+        altglyphdef: 'altGlyphDef',
+        altglyphitem: 'altGlyphItem',
+        animatecolor: 'animateColor',
+        animatemotion: 'animateMotion',
+        animatetransform: 'animateTransform',
+        clippath: 'clipPath',
+        feblend: 'feBlend',
+        fecolormatrix: 'feColorMatrix',
+        fecomponenttransfer: 'feComponentTransfer',
+        fecomposite: 'feComposite',
+        feconvolvematrix: 'feConvolveMatrix',
+        fediffuselighting: 'feDiffuseLighting',
+        fedisplacementmap: 'feDisplacementMap',
+        fedistantlight: 'feDistantLight',
+        fedropshadow: 'feDropShadow',
+        feflood: 'feFlood',
+        fefunca: 'feFuncA',
+        fefuncb: 'feFuncB',
+        fefuncg: 'feFuncG',
+        fefuncr: 'feFuncR',
+        fegaussianblur: 'feGaussianBlur',
+        feimage: 'feImage',
+        femerge: 'feMerge',
+        femergenode: 'feMergeNode',
+        femorphology: 'feMorphology',
+        feoffset: 'feOffset',
+        fepointlight: 'fePointLight',
+        fespecularlighting: 'feSpecularLighting',
+        fespotlight: 'feSpotLight',
+        fetile: 'feTile',
+        feturbulence: 'feTurbulence',
+        foreignobject: 'foreignObject',
+        glyphref: 'glyphRef',
+        lineargradient: 'linearGradient',
+        radialgradient: 'radialGradient',
+        textpath: 'textPath'
+    };
+    if (svg[el.type] != null)
+        return svg[el.type];
+    else
+        return el.type;
+}
+function fixSVGAttr(el) {
+    var list = ['attributeName', 'attributeType', 'baseFrequency', 'baseProfile', 'calcMode', 'clipPathUnits', 'diffuseConstant',
+        'edgeMode', 'filterUnits', 'glyphRef', 'gradientTransform', 'gradientUnits', 'kernelMatrix', 'kernelUnitLength',
+        'keyPoints', 'keySplines', 'keyTimes', 'lengthAdjust', 'limitingConeAngle', 'markerHeight', 'markerUnits', 'markerWidth',
+        'maskContentUnits', 'maskUnits', 'numOctaves', 'pathLength', 'patternContentUnits', 'patternTransform', 'patternUnits',
+        'pointsAtX', 'pointsAtY', 'pointsAtZ', 'preserveAlpha', 'preserveAspectRatio', 'primitiveUnits', 'refX', 'refY',
+        'repeatCount', 'repeatDur', 'requiredExtensions', 'requiredFeatures', 'specularConstant', 'specularExponent',
+        'spreadMethod', 'startOffset', 'stdDeviation', 'stitchTiles', 'surfaceScale', 'systemLanguage', 'tableValues',
+        'targetX', 'targetY', 'textLength', 'viewBox', 'viewTarget', 'xChannelSelector', 'yChannelSelector', 'zoomAndPan'];
+    var listLow = [];
+    for (var i in list)
+        listLow[i] = list[i].toLowerCase();
+    for (var i in el.attribute) {
+        var pos = listLow.indexOf(i.toLowerCase());
+        if (pos != -1 && list[pos] != i) {
+            el.attribute[list[pos]] = el.attribute[i];
+            delete el.attribute[i];
+        }
+    }
+    return el.attribute;
+}
+function fixMathAttr(el) {
+    for (var i in el.attribute)
+        if (i.toLowerCase() == 'definitionurl' && i != 'definitionURL') {
+            el.attribute['definitionURL'] = el.attribute[i];
+            delete el.attribute[i];
+            break;
+        }
+    return el.attribute;
+}
+function fixForeignAttr(el) {
+    var list = ['xlink:actuate', 'xlink:arcrole', 'xlink:href', 'xlink:role', 'xlink:show', 'xlink:title', 'xlink:type',
+        'xml:lang', 'xml:space', 'xmlns', 'xmlns:xlink'];
+    for (var i in el.attribute) {
+        var pos = list.indexOf(i.toLowerCase());
+        if (pos != -1 && (isSvg(el) || isMath(el))) {
+            el.attribute[list[pos].split(':').join(' ')] = el.attribute[i];
+            delete el.attribute[i];
+        }
+    }
+    return el.attribute;
+}
+
+function isSvg(node) {
+    var tempNode = node.parent;
+    if (node.type == 'svg')
+        return true;
+    else {
+        while (tempNode.constructor.name != 'documents') {
+            if (tempNode.type == 'svg')
+                return true;
+            tempNode = tempNode.parent;
+        }
+    }
+    return false;
+}
+function isTemplate(node) {
+    var tempNode = node.parent;
+    var res = 0;
+    while (tempNode.constructor.name != 'documents') {
+        if (tempNode.type == 'template' && !isSvg(tempNode))
+            res++;
+        tempNode = tempNode.parent;
+    }
+    return res;
+}
+function isMath(node) {
+    var tempNode = node.parent;
+    if (node.type == 'math')
+        return true;
+    else {
+        while (tempNode.constructor.name != 'documents') {
+            if (tempNode.type == 'math')
+                return true;
+            tempNode = tempNode.parent;
+        }
+    }
+    return false;
+}
+function treeWrapper(doc) {
+    var structure = '#document';
+    // if (doc.doctype != null)
+    //     structure += (doc.doctype.name != null ? ' ' + doc.doctype.name : '') + (doc.doctype.publicId != null ? ' ' + doc.doctype.publicId : '') + (doc.doctype.systemId != null ? ' ' + doc.doctype.systemId : '');
+    var cnode = doc.firstChild;
+    var rpt = 1;
+    var cnt = 0;
+    // console.log(1);
+    loop:
+        while (true) {
+            cnt++;
+            var attr = '';
+            // console.log(cnt + " " + cnode.type + " " + cnode.data);
+            // console.log();
+            if (cnode.type == 'text') {
+                structure += '\n|' + ' '.repeat((rpt + isTemplate(cnode)) * 2 - 1) + '"' + cnode.data + '"';
+                // console.log(3);
+            }
+            else if (cnode.type == 'comment') {
+                structure += '\n|' + ' '.repeat((rpt + isTemplate(cnode)) * 2 - 1) + '<!-- ' + cnode.data + ' -->';
+                // console.log(3);
+            }
+            else if (cnode.type == 'DocumentType' && cnt == 1) {
+                structure += '\n| <!DOCTYPE ' + cnode.name +
+                    (cnode.publicId ? ' "' + cnode.publicId + '"' : '')
+                    + (!cnode.publicId && cnode.systemId ? ' ""' : '')
+                    + (cnode.publicId || cnode.systemId ? ' "' + cnode.systemId + '"' : '') + '>';
+            }
+            else {
+                var prefix = '';
+                if (isSvg(cnode)) {
+                    prefix = 'svg ';
+                    cnode.type = fixSVGName(cnode);
+                    cnode.attribute = fixSVGAttr(cnode);
+                }
+                else if (isMath(cnode)) {
+                    prefix = 'math ';
+                    cnode.attribute = fixMathAttr(cnode);
+                }
+                cnode.attribute = fixForeignAttr(cnode);
+                structure += '\n|' + ' '.repeat((rpt + isTemplate(cnode)) * 2 - 1) + '<' + prefix + cnode.type + '>';
+                if (cnode.attribute != null && Object.keys(cnode.attribute).length > 0) {
+                    var attra = Object.keys(cnode.attribute);
+                    attra.sort();
+                    for (var i in attra)
+                        structure += '\n|' + ' '.repeat((rpt + isTemplate(cnode)) * 2 + 1) + attra[i] + '="' + cnode.attribute[attra[i]] + '"';
+                }
+                if (cnode.type == 'template' && !isSvg(cnode))
+                    structure += '\n|' + ' '.repeat((rpt + isTemplate(cnode)) * 2 + 1) + 'content';
+                // console.log(4);
+            }
+            if (cnode.firstChild.type != null) {
+                cnode = cnode.firstChild;
+                rpt++;
+                // console.log(5);
+            }
+            else {
+                if (cnode.next != null) {
+                    cnode = cnode.next;
+                    // console.log(6);
+                }
+                else {
+                    // console.log(7);
+                    while (true) {
+                        cnode = cnode.parent;
+                        rpt--;
+                        if (cnode.next != null) {
+                            cnode = cnode.next;
+                            break;
+                        }
+                        else if (cnode.constructor.name == 'documents')
+                            break loop;
+                    }
+                }
+            }
+            // if (cnt > 30)
+            //     break;
+        }
+    // console.log(0);
+    return structure;
+}
+function treeTest2(mode, start, stop, showLog, falseOnly) {
+    function logShown(str) {
+        if (showLog)
+            console.log(str);
+        return str;
+    }
+
+    var set = {
+        NS: {
+            mode: 'NoScript',
+            pathIn: 'HTMLCompare/TestSuite/NoScript/',
+            pathOut: 'HTMLCompare/DOM/NoScript/Parser/',
+            pathDom: 'HTMLCompare/DOM/NoScript/Original/'
+        },
+        B: {
+            mode: 'Both',
+            pathIn: 'HTMLCompare/TestSuite/Both/',
+            pathOut: 'HTMLCompare/DOM/Both/Parser/',
+            pathDom: 'HTMLCompare/DOM/Both/Original/'
+        }
+    };
+    var parse = require('../Parser/parser');
+    var fs = require('fs');
+    var files = fs.readdirSync(set[mode].pathIn);
+    var dis = [];
+
+    if (start == null)
+        start = 0;
+    if (stop == 0 || stop == null)
+        stop = files.length;
+    if (start > stop) {
+        var temp = start;
+        start = stop;
+        stop = temp;
+    }
+
+    logShown('[TREE CONSTRUCTION TEST]');
+    logShown('Mode: ' + mode + '. Processing:');
+
+    for (var i = start; i < stop; i++) {
+        var read = fs.readFileSync(set[mode].pathIn + files[i], 'utf8');
+        var res = parse.parsing(read);
+        // JSON.stringify(res.modeList.document);
+        var dom = treeWrapper(res.modeList.document);
+        var readDom = fs.readFileSync(set[mode].pathDom + files[i].slice(0, -4) + 'txt', 'utf8');
+        logShown(files[i] + ' --> ' + files[i].slice(0, -4) + 'txt: ' + (dom == readDom));
+        if (dom != readDom)
+            dis.push(files[i] + ': ' + read);
+        // logShown(res.modeList.document);
+        // console.log(dom);
+        // console.log(readDom);
+        // console.log(files[i] + ': ' + (dom == readDom));
+        // console.log(dom);
+        fs.writeFileSync(set[mode].pathOut + files[i].slice(0, -4) + 'txt', dom);
+    }
+    logShown(dis);
+    logShown(dis.length);
+}
 module.exports = {
     tokenAdapter: tokenAdapter,
     treeAdapter: treeAdapter,
     treeViewer: treeViewer,
     tokenTest: tokenTest,
     treeTest: treeTest,
+    treeWrapper: treeWrapper,
+    treeTest2: treeTest2,
     getDateString: getDateString,
     doubleEscapeAdapter: doubleEscapeAdapter
 };
